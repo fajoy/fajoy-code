@@ -23,9 +23,9 @@ String *newString(char *str,int size){
    this->this=this;
    this->free=StringFree;
    this->size=size;
-   this->item=strdup(str);
+   this->item=(char*)malloc(sizeof(char)*size);
+   strcpy(this->item,str);
    return this;
 }
-
 #endif
 

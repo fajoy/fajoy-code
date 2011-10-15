@@ -1,13 +1,12 @@
-CC=/usr/bin/gcc
-main=forktest
+CC=gcc
 maindir=$(shell pwd)
+mainc=$(shell basename $(main) |sed 's/.c//g')
 
 all:
-	$(CC) -o $(main) $(main).c
+	$(CC) -o $(mainc).o $(mainc).c
 
-run:$(main).c
-	$(CC) -o $(main).o $(main).c
-	$(maindir)/$(main).o
+run:
+	$(CC) -o $(mainc).o $(mainc).c && $(maindir)/$(mainc).o
 
 clean:
 	@rm *.o *~

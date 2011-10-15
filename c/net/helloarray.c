@@ -21,6 +21,20 @@ int main(int argc,char *argv[],char *envp[])
       int v=GetItem(arr,i,int);
       printf("arr[%d]=%d \n",i,v);
    }
+   free(arr);
+   
+   char aaa[10]="aaaa";
+   char bbb[10]="bbaa";
+   char ccc[10]="cccc";
+   push(stack,aaa);
+   push(stack,bbb);
+   push(stack,ccc);
 
+   char **ddd;
+    arr_size=ToArray(stack,&ddd);
+    for(i=0;i<arr_size;i++){
+      printf("ddd[%d]=%s \n",i,ddd[i]);
+    }
+   
    return 0;
 }
