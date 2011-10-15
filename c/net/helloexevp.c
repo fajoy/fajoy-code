@@ -24,7 +24,7 @@ int main(int argc,char *argv[],char *envp[]){
    char cmd[255];
    printf("cmd:");
    scanf("%[^\n]",cmd);
-   Array *arr=split(cmd,"|");
+   Array *arr=split(cmd," ");
    char **arg;
    int arg_size=ToArray(arr,&arg);
    int i;
