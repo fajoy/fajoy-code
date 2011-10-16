@@ -6,7 +6,7 @@ all:
 	$(CC) -o $(mainc).o $(mainc).c
 
 run:
-	$(CC) -o $(mainc).o $(mainc).c && $(maindir)/$(mainc).o
+	$(CC) -o $(mainc).o -g $(mainc).c && $(maindir)/$(mainc).o
 
 clean:
 	@rm *.o *~

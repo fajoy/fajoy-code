@@ -1,58 +1,47 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "Array.h"
-#include "String.h"
-#include "Array.c"
 
-typedef struct{
-   int p_id;
-   int argc;
-   char **argv;
-   int pipe[2];
-   struct  Cmd *parnet;
-   struct Cmd *prev;
-   struct Cmd *next;
-}Cmd;
 
-Cmd getCmd(char *cmd,char *del ){
-  Cmd c;
-  Array *arr=split(cmd,"|");
-  c.argc =ToArray(arr,&c.argv);
-  return c;
+int openStdOut(){
+   //close(1);
+   int fd=open("/dev/pts/0",1);
+   return fd;
+}
+
+int openStdIn(){
+   //close(0);
+   int fd=open("/dev/pts/1",0);
+   return fd;
 }
 
 
-int spawn(char *prog, char **arg_list)
-{
-   pid_t child;
 
-   child = fork();
-
-   if (child != 0) {
-         wait();
-         return child;
-      } else {
-            execvp(prog, arg_list);
-            fprintf(stderr, "spawn errorn");
-            return -1;
-         }
-}
 int main(int argc,char *argv[],char *envp[]){
+   int tmp[2];
    char cmd[255];
-   Cmd c;
-   int i=0;
+   pipe(tmp);
+   int tmp_out=tmp[0];
+   int tmp_in=tmp[1];
    do{
       printf("> ");
       fgets(cmd,255,stdin);
-   }while(strlen(cmd)==1);
-   c=getCmd(cmd,"|");
-   Cmd *subCmd=malloc(sizeof(Cmd)*c.argc);
-   i;
-   for(i=0;i<c.argc;i++){
-      printf("arg[%d]=%s\n",i,c.argv[i]);
-
-   }
+      if(strcmp(cmd,":q\n")==0){
+         close(tmp_in);
+         printf("tmp:\n");
+         break;
+      }
+      write(tmp_in,cmd,strlen(cmd));
+   }while(1);
+   do{
+      int len=read(tmp_out,cmd,255);
+      if(len==0){//EOF
+         break;
+      }else{
+         printf("%s",cmd);
+      }
+   }while(1);
+   close(tmp_out);
    return 0;
 }
 
