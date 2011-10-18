@@ -22,7 +22,8 @@ int main(int argc,char *argv[],char *envp[]){
    char cmd[255];
    pipe(tmp);
    int tmp_out=tmp[0];
-   int tmp_in=tmp[1];
+   int tmp_in=tmp[1]
+
    do{
       printf("> ");
       fgets(cmd,255,stdin);
@@ -38,6 +39,8 @@ int main(int argc,char *argv[],char *envp[]){
       if(len==0){//EOF
          break;
       }else{
+         if (len!=255)
+            cmd[len]='\0';
          printf("%s",cmd);
       }
    }while(1);

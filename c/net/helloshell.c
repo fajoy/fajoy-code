@@ -35,10 +35,28 @@ int spawn(Cmd *cmd)
    child = fork();
    if (child != 0) {
          cmd->p_id=child;
-         //wait();
+         wait();
          return child;
       } else {
+         if(cmd->prev!=NULL){
+            close(0);
+            dup(cmd->prev->pipe[1]);
+         }else{
+            close(0);
+            dup(cmd->parent->pipe[1]);
+         }
+
+         if(cmd->next!=NULL){
+            close(1);
+            dup(cmd->pipe[0]);
+         }else{
+            close(1);
+            dup(cmd->parent->pipe[0]);
+         }
+
+         
          execvp(prog, arg_list);
+
          fprintf(stderr, "spawn errorn");
          return -1;
      }
@@ -48,6 +66,7 @@ void showCmd(Cmd *cmd){
    int i;
    for(i=0;i<cmd->argc;i++){
       printf("argv[%d]=%s\n",i,cmd->argv[i]);
+
    }
 
 }
@@ -97,10 +116,11 @@ int main(int argc,char *argv[],char *envp[]){
       }
       nextCmd->parent=&c;
       prevCmd=nextCmd;
+      pipe(nextCmd->pipe);
       showCmd(nextCmd);
       nextCmd++;
    }
-   
+   nextCmd->next=NULL;
    nextCmd=subCmd;  
    while(nextCmd){
    spawn(nextCmd);
