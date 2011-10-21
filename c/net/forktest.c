@@ -1,4 +1,4 @@
-#include<stdio.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 typedef struct {
@@ -15,20 +15,8 @@ char *newstring(int size){
    char *new=(char*)malloc(sizeof(char)*size);
    return new;
 }
-/*
-mstring *split(char *str, const char *del) {
-   char *s = strtok(str, del);
-   char **arr;
-   while(s != NULL) {
-     *arr++ = s;
-     s = strtok(NULL, del);
-   }
-   return arr;
- } 
-*/
 
-int main(int argc,char *argv[],char *envp[])
-{
+int main(int argc,char *argv[],char *envp[]){
    mstring test;
    printf("%d",strlen(test.str));
    char *p;
@@ -38,11 +26,10 @@ int main(int argc,char *argv[],char *envp[])
    scanf("%s",str);
    p = strtok (str, spl);
 
-   while (p != NULL)
-   {
-   printf ("%s\n", p);
-   printf("%d\n",strlen(p));
-   p = strtok (NULL, spl);
+   while (p != NULL){
+      printf ("%s\n", p);
+      printf("%d\n",strlen(p));
+      p = strtok (NULL, spl);
    }
 
 

@@ -8,5 +8,8 @@ all:
 run:
 	$(CC) -o $(mainc).o -g $(mainc).c && $(maindir)/$(mainc).o
 
+debug:
+	$(CC) -o $(mainc).o -g $(mainc).c &&gdb $(maindir)/$(mainc).o
+
 clean:
 	@rm *.o *~

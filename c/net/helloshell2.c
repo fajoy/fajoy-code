@@ -39,17 +39,16 @@ int spawn(Cmd *cmd)
       } else {
 
          if(cmd->prev!=NULL){
-            dup(cmd->prev->pipe[0]);
+            dup2(cmd->prev->pipe[0],0);
          }else{
-            dup(cmd->parent->pipe[0]);
+            dup2(cmd->parent->pipe[0],0);
          }
          if(cmd->next!=NULL){
-            dup(cmd->pipe[1]);
+            dup2(cmd->pipe[1],1);
          }else{
-            dup(cmd->parent->pipe[1]);
+            dup2(cmd->parent->pipe[1],1);
          }
-         close(2);
-         dup(1);
+         dup2(1,2);
          Cmd *next=cmd->parent;
          while(next){
             close(next->pipe[0]);
@@ -76,23 +75,26 @@ void showCmd(Cmd *cmd){
 
 
 int main(int argc,char *argv[],char *envp[]){
-   char *cmd;
-   char buffer[255];
+   char cmd[255];
    Cmd c;
    c.pipe[0]=dup(0);
    c.pipe[1]=dup(1);
    c.p_id=getpid();
    while(1){
       int i,j=0;
-      printf("%% ");
-      memset(buffer,0,255);
-      if(!fgets(buffer,255,stdin))
-          return 0;
-      cmd=strtok(buffer,"\r\n");
-      if(!cmd)
-         continue;
+      do{
+         printf("%% ");
+         memset(cmd,0,255);
+         fgets(cmd,255,stdin);
+         i=strlen(cmd);
+         if(cmd[0]=='\0'&&i<=1)
+            return 0;
+      }while(i==1);
+      cmd[i-1]='\0';
+      fflush(stdout);
       Array *arr=split(cmd,"|");
       c.argc =ToArray(arr,&c.argv);
+   
       Cmd *subCmd=malloc(sizeof(Cmd)*c.argc);
       c.next=subCmd;
       Cmd *prevCmd=NULL;
@@ -109,9 +111,6 @@ int main(int argc,char *argv[],char *envp[]){
          nextCmd++;
       }
       fflush(stdout);
-
-      close(0);
-      close(1);
       nextCmd=subCmd;  
       int child_pid;
       while(nextCmd){

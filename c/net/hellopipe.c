@@ -22,18 +22,19 @@ int main(int argc,char *argv[],char *envp[]){
    char cmd[255];
    pipe(tmp);
    int tmp_out=tmp[0];
-   int tmp_in=tmp[1]
+   int tmp_in=tmp[1];
 
-   do{
-      printf("> ");
-      fgets(cmd,255,stdin);
+   printf("> ");
+   while(fgets(cmd,255,stdin)!=NULL){
       if(strcmp(cmd,":q\n")==0){
-         close(tmp_in);
-         printf("tmp:\n");
          break;
       }
       write(tmp_in,cmd,strlen(cmd));
-   }while(1);
+      printf("> ");
+   }
+   close(tmp_in);
+   printf("\ntmp:");
+
    do{
       int len=read(tmp_out,cmd,255);
       if(len==0){//EOF
