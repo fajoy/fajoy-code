@@ -11,4 +11,3 @@ noop
 cat test1.txt
 cat test2.txt
 exit
-

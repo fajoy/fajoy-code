@@ -7,4 +7,3 @@ setenv PATH bin
 ls -al bin
 date
 exit
-
