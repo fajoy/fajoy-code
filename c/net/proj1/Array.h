@@ -28,12 +28,17 @@ void _ArrayPush(Array *this,int *ptr){
    *(this->address+this->length)=ptr;
    this->length++;
 }
+void _ArraySet(Array *this,int index,int *ptr){
+   *(this->address+index)=ptr;
+}
+
 int *ArrayPop(Array *this){
-   this->length--;
-   return *(this->address+this->length);
+   if(this->length!=0)
+      this->length--;
+   return (int*)(this->address+this->length);
 }
 int *_ArrayGet(Array *this,int index){
-   return *(this->address+index);
+   return (int*)(this->address+index);
 }
 int _ToArray(Array *this,int **ptrArray){
    int size=this->length;
@@ -53,6 +58,7 @@ static Array *stack=&STACK;
 #define pop(s,t) (t)*(ArrayPop(s))
 #define GetItem(a,i,t) (t)*((t*)a[i])
 #define ArrayPush(a,p) _ArrayPush(a,(int*)p)
+#define ArraySet(a,i,p) _ArraySet(a,i,(int*)p)
 #define ArrayGet(a,i,t) (t)_ArrayGet(a,i)
 #define ToArray(a,na) _ToArray(a,(int**)na)
 #endif
