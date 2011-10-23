@@ -1,35 +1,30 @@
-0: aa
-1: bb
-2: bin
-3: cc
-4: ls.txt
-5: qq
-6: test
-7: test.html
-8: test1.txt
-9: test2.txt
-10: tt
 a
-aa
-bb
 bin
-cc
-ls.txt
-qq
-test
 test.html
 test1.txt
 test2.txt
-tt
+0: a
+1: bin
+2: test.html
+3: test1.txt
+4: test2.txt
 a
-aa
-bb
 bin
-cc
-ls.txt
-qq
-test
 test.html
 test1.txt
 test2.txt
-tt
+0: a
+1: bin
+2: test.html
+3: test1.txt
+4: test2.txt
+5: 0: a
+6: 1: bin
+7: 2: test.html
+8: 3: test1.txt
+9: 4: test2.txt
+10: a
+11: bin
+12: test.html
+13: test1.txt
+14: test2.txt

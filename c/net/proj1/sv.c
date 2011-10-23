@@ -8,11 +8,11 @@
 #include <sys/socket.h> 
 #include <unistd.h>   
 #include  <fcntl.h>
-#define PORTNUM 8000 
 #define queMAX 32767
 #include <string.h>
 #include "Array.h"
 #include "Array.c"
+int PORTNUM=8000;
 char PATH[255]="PATH=bin:.";
 char PWD[255]="";
 char binPATH[255];
@@ -80,9 +80,9 @@ int spawn(Cmd *cmd)
          close(next->pipe[1]);
          next=next->next;
       }
-
          execve(strcat(binPATH,prog), arg_list,env);
-        //fprintf(stderr, "%s: command not found\n",prog);
+         //fprintf(stderr, "%s: command not found\n",prog);
+         printf("Unknown command: [%s].\n",prog);
          return -1;
      }
    return child;
@@ -104,6 +104,9 @@ int pipeCmd(Cmd *cmd){
       {
          char * fpath=cmd->argv[i+1];
          close(cmd->pipe[1]);
+         if(strncmp(cmd->argv[i],">>",2)==0)
+         fd=open(fpath,O_WRONLY|O_CREAT|O_APPEND,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP);
+         else
          fd=open(fpath,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP);
          cmd->argv[i]=NULL;
          cmd->dst=-1;
@@ -186,6 +189,12 @@ int dup2Cmd(Cmd *cmd){
      
 }
 int main(int argc,char *argv[],char *envp[]){
+
+   printf("Input Server Port:");
+   char input[10];
+   fgets(input,9,stdin);
+   if(atoi(input)!=0)
+      PORTNUM=atoi(input);
    chdir("ras");
    sprintf(PWD,"PWD=%s",getenv("PWD"));
    sprintf(binPATH,"%s/ras/bin/",getenv("PWD"));
@@ -217,6 +226,8 @@ int main(int argc,char *argv[],char *envp[]){
       int consocket = accept(mysocket, (struct sockaddr *)&dest, &socksize);
       if(consocket>=0){
          dprintf(stdo_fd,"%d+ ok\n",flowNo++,consocket);
+         fflush(stdout);
+         fflush(stdin);
          close(0);
          close(1);
          dup(consocket);
@@ -234,6 +245,7 @@ int main(int argc,char *argv[],char *envp[]){
             close(mysocket);
             close(stdi_fd);
             char *remote_ip=inet_ntoa(dest.sin_addr);
+            int remote_port=dest.sin_port;
             char msg[255];
             char buffer[255];
 
@@ -242,19 +254,25 @@ int main(int argc,char *argv[],char *envp[]){
             int qi=0;
 
             dprintf(stdo_fd,"(%d)%s open\n",getpid(),remote_ip);
+            
+            printf("****************************************\n");
+            printf("** Welcome to the information server. **\n");
+            printf("****************************************\n");
+            printf("Your From %s:%d\n",remote_ip,remote_port);
             fflush(stdout);
-
+            
             Cmd *c=(Cmd*)malloc(sizeof(Cmd));
             c->pipe[0]=dup(consocket);
             c->pipe[1]=dup(consocket);
             c->p_id=getpid();
             while(1){
-               int i,j=0;
+               int i,j;
                char buffer[255];
                char *req;
                printf("%% ");
-               fflush(stdout);
                memset(buffer,0,255);
+               fflush(stdout);
+               fflush(stdin);
                if(!fgets(buffer,255,stdin)){
                   break;
                }
@@ -290,7 +308,7 @@ int main(int argc,char *argv[],char *envp[]){
                Cmd *subCmd=malloc(sizeof(Cmd)*c->argc);
                Cmd *nextCmd=subCmd;
                for(i=0;i<c->argc;i++){
-                  *nextCmd=getCmd(c->argv[i]," ");
+                  *nextCmd=getCmd(c->argv[i]," \t");
                   nextCmd->qi=qi;
                   nextCmd->dst=qi;
                   if(c->first==NULL){
@@ -373,6 +391,7 @@ int main(int argc,char *argv[],char *envp[]){
             close(0);
             close(1);
             close(2);
+            close(mysocket);
             dprintf(stdo_fd,"(%d)%s close\n",getpid(),remote_ip);
             return 0;
          }
