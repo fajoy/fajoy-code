@@ -9,6 +9,7 @@
 #include <unistd.h>   
 #include  <fcntl.h>
 #define PORTNUM 8000 
+#define queMAX 32767
 #include <string.h>
 #include "Array.h"
 #include "Array.c"
@@ -23,6 +24,7 @@ typedef struct Cmd{
    int argc;
    char **argv;
    int pipe[2];
+   int dstpipe[2];
    int qi;
    int dst;
    struct Cmd *parent;
@@ -32,10 +34,6 @@ typedef struct Cmd{
 }Cmd;
 
 void freeCmd(Cmd *cmd){
-   int i=0;
-   for(i=0;i<cmd->argc;i++)
-      free(cmd->argv[i]);
-   free(cmd->argv);
    free(cmd);
 }
 
@@ -43,6 +41,8 @@ Cmd getCmd(char *cmd,char *del ){
   Cmd c;
   Array *arr=split(cmd,del);
   c.argc =ToArray(arr,&c.argv);
+  c.pipe[0]=-1;
+  c.pipe[1]=-1;
   c.parent=NULL;
   c.prev=NULL;
   c.next=NULL;
@@ -57,19 +57,27 @@ int spawn(Cmd *cmd)
 
    pid_t child=0;
 
+   dup2Cmd(cmd);
    child = fork();
 
    if (child != 0) {
+      if(cmd->prev!=NULL){
+      close(cmd->prev->pipe[0]);
+      close(cmd->prev->pipe[1]);
+      }
+
       cmd->p_id=child;
+
       return child;
    } else {
-         dup2Cmd(cmd);
-          Cmd *next=cmd->first;
+      close(0);
+      close(1);
+      dup(cmd->dstpipe[0]);
+      dup(cmd->dstpipe[1]);
+      Cmd *next=cmd->first;
       while(next){
-         if(next!=cmd){
-            close(next->pipe[0]);
-            close(next->pipe[1]);
-         }
+         close(next->pipe[0]);
+         close(next->pipe[1]);
          next=next->next;
       }
 
@@ -90,7 +98,6 @@ void showCmd(Cmd *cmd){
 
 int pipeCmd(Cmd *cmd){
    pipe(cmd->pipe);
-   dprintf(stdo_fd,"%d,%d\n",cmd->pipe[0],cmd->pipe[1]);
    int i,fd=1;
    for (i=1;i+1<cmd->argc;i++){
       if(strncmp(cmd->argv[i],">",1)==0)
@@ -103,23 +110,54 @@ int pipeCmd(Cmd *cmd){
       }
    }
 }
+void checkPipe(Cmd *cmd){
+   if(cmd->pipe[0]==-1)
+      pipeCmd(cmd);
+}
 int ddup2(int src ,int dst){
-   dprintf(stdo_fd,"%d-%d ",src,dst);
    return dup2(src,dst);
 }
 int dup2Cmd(Cmd *cmd){
-   int si = cmd->pipe[0];
-   int so = cmd->pipe[1];
-   int i=dup(si);
-   int o=dup(so);
-   dprintf(stdo_fd,"\n%s i%d-%d o%d-%d ",cmd->argv[0],si,i,so,o);
+   checkPipe(cmd);
+   int li =cmd->pipe[0];
+   int lo =cmd->pipe[1];
+   Cmd *prev,*next;
+
+     if(cmd->prev==NULL)
+        prev=cmd->parent;
+     else 
+        prev=cmd->prev;
+
+
+     if(cmd->dst==-1)
+        next=cmd;
+     else if(cmd->next==NULL)
+        next=cmd->parent;
+     else if(cmd->dst==cmd->qi)
+        next=cmd;
+     else if(cmd->dst==cmd->next->qi)
+        next=cmd;
+     else{
+        Cmd *np=cmd->next;
+        while (np){
+           if(cmd->dst==np->qi)
+              break;
+           np=np->next;
+        }
+        next= np->prev;
+
+     }
+
+   /*
      if(cmd->prev==NULL)
          ddup2(cmd->parent->pipe[0],i);
      else 
          ddup2(cmd->prev->pipe[0],i);
 
-      if(cmd->dst==-1)
-         ddup2(cmd->pipe[1],o);
+      if(cmd->dst==-1){
+         close(1);
+         dup(cmd->pipe[1]);
+      }
       else if(cmd->next==NULL)
          ddup2(cmd->parent->pipe[1],o);
       else if(cmd->dst==cmd->qi)
@@ -135,8 +173,16 @@ int dup2Cmd(Cmd *cmd){
          }
          ddup2(np->prev->pipe[1],o);
          }
-      
-      
+     */ 
+
+   checkPipe(prev);
+   checkPipe(next);
+   int ri=prev->pipe[0];
+   int ro=next->pipe[1];
+   cmd->dstpipe[0]=ri;
+   cmd->dstpipe[1]=ro;
+   dprintf(stdo_fd,"i%d,o%d ",cmd->pipe[0],cmd->pipe[1]);
+   dprintf(stdo_fd,"%d-%d %d-%d\n",ri,0,lo,1);
      
 }
 int main(int argc,char *argv[],char *envp[]){
@@ -191,8 +237,8 @@ int main(int argc,char *argv[],char *envp[]){
             char msg[255];
             char buffer[255];
 
-            Cmd *cmd_que[4096];
-            memset(cmd_que,0,4096);
+            Cmd *cmd_que[queMAX];
+            memset(cmd_que,0,queMAX);
             int qi=0;
 
             dprintf(stdo_fd,"(%d)%s open\n",getpid(),remote_ip);
@@ -214,7 +260,7 @@ int main(int argc,char *argv[],char *envp[]){
                }
                req=strtok(buffer,"\r\n/");
                cmd_que[qi++]=NULL;
-               qi%=4096;
+               qi%=queMAX;
                dprintf(stdo_fd,"(%d+%d)%%%s\n",getpid(),qi,req);
                if(!req)
                   continue;
@@ -229,7 +275,7 @@ int main(int argc,char *argv[],char *envp[]){
                   break;
                }
                int delay=0;
-               Array *arr=split(req,"|");
+               Array *arr=split(req,"|!");
                c->argc =ToArray(arr,&c->argv);
                c->qi=qi;
                fflush(stdout);
@@ -255,7 +301,7 @@ int main(int argc,char *argv[],char *envp[]){
                      c->next=nextCmd;
                   }
 
-                  if(i+1==c->argc){//final
+                  if(i+1==c->argc&&i!=0){//final
                      delay=atoi(nextCmd->argv[0]);
                      if(delay>0)
                         break;
@@ -271,7 +317,7 @@ int main(int argc,char *argv[],char *envp[]){
                   nextCmd++;
                }
                if(delay>0){
-                  int dstqi=(qi+delay)%4096;
+                  int dstqi=(qi+delay)%queMAX;
                   nextCmd=prevCmd;
                   prevCmd=cmd_que[dstqi];
                   nextCmd->dst=dstqi;
@@ -292,26 +338,15 @@ int main(int argc,char *argv[],char *envp[]){
 
 
                nextCmd=c->first;  
-               dprintf(stdo_fd,"start pipe\n");
-               while(nextCmd){
-                nextCmd->first=c->first;  
-                pipeCmd(nextCmd);
-                nextCmd=nextCmd->next;
-               }
-
-
-               close(0);
-               close(1);
-               nextCmd=c->first;  
                int child_pid;
                while(nextCmd){
-                  dprintf(stdo_fd,"%s|",nextCmd->argv[0]);
+                  dprintf(stdo_fd,"%s |",nextCmd->argv[0]);
                   child_pid=spawn(nextCmd);
                   if(child_pid<0) //child exec error
                      return -1;
                   nextCmd=nextCmd->next;
                }
-               dprintf(stdo_fd," \n ");
+               dprintf(stdo_fd," \n");
 
                nextCmd=c->first;  
                while(nextCmd){
@@ -319,21 +354,17 @@ int main(int argc,char *argv[],char *envp[]){
                   close(nextCmd->pipe[1]);
                   if(!kill(nextCmd->p_id,0)){
                      wait();
-                     nextCmd=c->first;
                   }
                   nextCmd=nextCmd->next;
-                  fflush(stdout);
                }
-               dup(c->pipe[0]);
-               dup(c->pipe[1]);
-               /*
+              /* 
                nextCmd=c->first;  
                while(nextCmd){
                   prevCmd=nextCmd;
                   nextCmd=nextCmd->next;
                   freeCmd(prevCmd);
-               }*/
-
+               }
+               */
 
             }
             close(c->pipe[0]);
