@@ -12,6 +12,7 @@
 #include <string.h>
 #include "Array.h"
 #include "Array.c"
+#define ndebug
 int PORTNUM=8000;
 char PATH[255]="PATH=bin:.";
 char PWD[255]="";
@@ -184,9 +185,10 @@ int dup2Cmd(Cmd *cmd){
    int ro=next->pipe[1];
    cmd->dstpipe[0]=ri;
    cmd->dstpipe[1]=ro;
+#ifdef debug
    dprintf(stdo_fd,"i%d,o%d ",cmd->pipe[0],cmd->pipe[1]);
    dprintf(stdo_fd,"%d-%d %d-%d\n",ri,0,lo,1);
-     
+#endif
 }
 int main(int argc,char *argv[],char *envp[]){
 
@@ -279,7 +281,10 @@ int main(int argc,char *argv[],char *envp[]){
                req=strtok(buffer,"\r\n/");
                cmd_que[qi++]=NULL;
                qi%=queMAX;
+
+#ifdef debug
                dprintf(stdo_fd,"(%d+%d)%%%s\n",getpid(),qi,req);
+#endif
                if(!req)
                   continue;
                if(strcmp(req,"printenv PATH")==0)
@@ -349,7 +354,9 @@ int main(int argc,char *argv[],char *envp[]){
                         nextCmd=nextCmd->next;
                      }
                   }
+#ifdef debug
                   dprintf(stdo_fd,"(%d->%d)+%d\n",getpid(),delay,dstqi );
+#endif
                   continue;
                }
 
@@ -358,14 +365,18 @@ int main(int argc,char *argv[],char *envp[]){
                nextCmd=c->first;  
                int child_pid;
                while(nextCmd){
+#ifdef debug
                   dprintf(stdo_fd,"%s |",nextCmd->argv[0]);
+#endif
                   child_pid=spawn(nextCmd);
                   if(child_pid<0) //child exec error
                      return -1;
                   nextCmd=nextCmd->next;
                }
-               dprintf(stdo_fd," \n");
 
+#ifdef debug
+               dprintf(stdo_fd," \n");
+#endif
                nextCmd=c->first;  
                while(nextCmd){
                   close(nextCmd->pipe[0]);
