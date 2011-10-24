@@ -18,6 +18,8 @@ char PATH[255]="PATH=bin:.";
 char PWD[255]="";
 char binPATH[255];
 char *env[]={PATH,PWD,""};
+
+int erro_fd;
 int stdo_fd;
 int stdi_fd;
 typedef struct Cmd{
@@ -63,18 +65,38 @@ int spawn(Cmd *cmd)
 
    if (child != 0) {
       if(cmd->prev!=NULL){
-      close(cmd->prev->pipe[0]);
-      close(cmd->prev->pipe[1]);
+
+      if(cmd->pipe[1]==erro_fd){
+         erro_fd=2;
+      }
+      else{
+         close(cmd->prev->pipe[0]);
+         close(cmd->prev->pipe[1]);
+      }
       }
 
       cmd->p_id=child;
 
       return child;
    } else {
+
+#ifdef debug
+   dprintf(stdo_fd,"(%d)%s  i%d,o%d ",getpid(),cmd->argv[0],cmd->pipe[0],cmd->pipe[1]);
+   dprintf(stdo_fd,"%d-%d %d-%d\n",cmd->dstpipe[0],0,cmd->dstpipe[1],1);
+#endif
       close(0);
       close(1);
       dup(cmd->dstpipe[0]);
       dup(cmd->dstpipe[1]);
+      if(erro_fd==2){
+         close(2);
+         dup(cmd->dstpipe[1]);
+      }
+      else
+      {
+         //close(2);
+         //dup2(erro_fd,2);
+      }
       Cmd *next=cmd->first;
       while(next){
          close(next->pipe[0]);
@@ -83,7 +105,10 @@ int spawn(Cmd *cmd)
       }
          execve(strcat(binPATH,prog), arg_list,env);
          //fprintf(stderr, "%s: command not found\n",prog);
-         printf("Unknown command: [%s].\n",prog);
+      if(erro_fd!=2)
+         dprintf(erro_fd,"Unknown command: [%s].\n",prog);
+      else
+         fprintf(stdout,"Unknown command: [%s].\n",prog);
          return -1;
      }
    return child;
@@ -121,6 +146,22 @@ void checkPipe(Cmd *cmd){
 int ddup2(int src ,int dst){
    return dup2(src,dst);
 }
+int indexOf(char *str1,char *str2)  
+{  
+    char *p=str1;  
+    int i=0;  
+    p=strstr(str1,str2);  
+    if(p==NULL)  
+        return -1;  
+    else{  
+            while(str1!=p)  
+            {  
+                        str1++;  
+                        i++;  
+                    }  
+        }  
+    return i;  
+} 
 int dup2Cmd(Cmd *cmd){
    checkPipe(cmd);
    int li =cmd->pipe[0];
@@ -185,10 +226,6 @@ int dup2Cmd(Cmd *cmd){
    int ro=next->pipe[1];
    cmd->dstpipe[0]=ri;
    cmd->dstpipe[1]=ro;
-#ifdef debug
-   dprintf(stdo_fd,"i%d,o%d ",cmd->pipe[0],cmd->pipe[1]);
-   dprintf(stdo_fd,"%d-%d %d-%d\n",ri,0,lo,1);
-#endif
 }
 int main(int argc,char *argv[],char *envp[]){
 
@@ -244,6 +281,7 @@ int main(int argc,char *argv[],char *envp[]){
             dup(stdo_fd);
             continue;
          }else{
+            erro_fd=2;
             close(mysocket);
             close(stdi_fd);
             char *remote_ip=inet_ntoa(dest.sin_addr);
@@ -298,6 +336,13 @@ int main(int argc,char *argv[],char *envp[]){
                   break;
                }
                int delay=0;
+               int has_err_pipe=indexOf(req,"!");
+
+#ifdef debug
+               if(has_err_pipe!=-1)
+               dprintf(stdo_fd,"(%d->%d)has error pipe %d\n",getpid(),delay,has_err_pipe );
+#endif
+
                Array *arr=split(req,"|!");
                c->argc =ToArray(arr,&c->argv);
                c->qi=qi;
@@ -342,9 +387,18 @@ int main(int argc,char *argv[],char *envp[]){
                if(delay>0){
                   int dstqi=(qi+delay)%queMAX;
                   nextCmd=prevCmd;
+                  if(has_err_pipe>0){
+                        has_err_pipe=-1;
+                        checkPipe(prevCmd);
+                        erro_fd=prevCmd->pipe[1];
+#ifdef debug
+                        dprintf(stdo_fd,"(%d->%d)error pipe %d\n",getpid(),delay,erro_fd );
+#endif
+                  }
                   prevCmd=cmd_que[dstqi];
                   nextCmd->dst=dstqi;
                   cmd_que[dstqi]=nextCmd;
+
                   if(prevCmd){
                      prevCmd->next=c->next;
                      c->next->prev=prevCmd;
@@ -365,11 +419,8 @@ int main(int argc,char *argv[],char *envp[]){
                nextCmd=c->first;  
                int child_pid;
                while(nextCmd){
-#ifdef debug
-                  dprintf(stdo_fd,"%s |",nextCmd->argv[0]);
-#endif
                   child_pid=spawn(nextCmd);
-                  if(child_pid<0) //child exec error
+                  if(child_pid<=0) //child exec error
                      return -1;
                   nextCmd=nextCmd->next;
                }
@@ -377,12 +428,24 @@ int main(int argc,char *argv[],char *envp[]){
 #ifdef debug
                dprintf(stdo_fd," \n");
 #endif
+               int status;
                nextCmd=c->first;  
                while(nextCmd){
                   close(nextCmd->pipe[0]);
                   close(nextCmd->pipe[1]);
-                  if(!kill(nextCmd->p_id,0)){
-                     wait();
+                  //f(!kill(nextCmd->p_id,0)){
+                  //
+                  do{
+
+                     if( waitpid(nextCmd->p_id, &status, WUNTRACED | WCONTINUED)==-1)
+                        break;
+                     
+#ifdef debug
+                     dprintf(stdo_fd,"%d wait close status\n",nextCmd->p_id);
+#endif
+                  }while(!WIFEXITED(status) && !WIFSIGNALED(status));
+                  if(nextCmd->pipe[1]==erro_fd){
+                     erro_fd=2;
                   }
                   nextCmd=nextCmd->next;
                }

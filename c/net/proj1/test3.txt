@@ -4,4 +4,12 @@ removetag0 test.html |1
 number | number |2
 cat ls.txt |1
 number
+ls
+ls
+sf
+ls
+fesafe
+ls
+ls
+fdasf
 exit
