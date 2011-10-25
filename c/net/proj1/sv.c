@@ -11,7 +11,6 @@
 #define queMAX 32767
 #include <string.h>
 #include "Array.h"
-#include "Array.c"
 #define ndebug
 int PORTNUM=8000;
 char PATH[255]="PATH=bin:.";
@@ -22,6 +21,22 @@ char *env[]={PATH,PWD,""};
 int erro_fd;
 int stdo_fd;
 int stdi_fd;
+
+Array *split(char *str, const char *del) {
+   char *root=strdup(str);
+   char *sub=strtok(root, del);
+   Array *list=newArray(100);
+   int i;
+   while(sub != NULL) {
+     i=list->length;
+     ArrayPush(list,sub);
+     sub = strtok(NULL, del);
+     char*ss=ArrayGet(list,i,char*);
+     //printf("list[%d]=%s\n",i,ss);
+   }
+   return list;
+} 
+
 typedef struct Cmd{
    int p_id;
    int argc;
@@ -43,7 +58,10 @@ void freeCmd(Cmd *cmd){
 Cmd getCmd(char *cmd,char *del ){
   Cmd c;
   Array *arr=split(cmd,del);
-  c.argc =ToArray(arr,&c.argv);
+  if (arr->length!=0)
+     c.argc =ToArray(arr,&c.argv);
+  else
+     c.argc=0;
   c.pipe[0]=-1;
   c.pipe[1]=-1;
   c.parent=NULL;
@@ -64,6 +82,7 @@ int spawn(Cmd *cmd)
    child = fork();
 
    if (child != 0) {
+      if(child>0){
       if(cmd->prev!=NULL){
 
       if(cmd->pipe[1]==erro_fd){
@@ -76,7 +95,7 @@ int spawn(Cmd *cmd)
       }
 
       cmd->p_id=child;
-
+      }
       return child;
    } else {
 
@@ -109,7 +128,7 @@ int spawn(Cmd *cmd)
          dprintf(erro_fd,"Unknown command: [%s].\n",prog);
       else
          fprintf(stdout,"Unknown command: [%s].\n",prog);
-         return -1;
+         return 0;
      }
    return child;
 }
@@ -359,6 +378,8 @@ int main(int argc,char *argv[],char *envp[]){
                Cmd *nextCmd=subCmd;
                for(i=0;i<c->argc;i++){
                   *nextCmd=getCmd(c->argv[i]," \t");
+                  if(nextCmd->argc==0)
+                     continue;
                   nextCmd->qi=qi;
                   nextCmd->dst=qi;
                   if(c->first==NULL){
@@ -420,8 +441,13 @@ int main(int argc,char *argv[],char *envp[]){
                int child_pid;
                while(nextCmd){
                   child_pid=spawn(nextCmd);
-                  if(child_pid<=0) //child exec error
-                     return -1;
+                  if(child_pid==0) //child exec error
+                  {
+                     return 0;
+                  }else if(child_pid<0){//fork error
+                     printf("Shell Error may fork too much.\n");
+                     break;
+                  }
                   nextCmd=nextCmd->next;
                }
 
