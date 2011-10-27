@@ -12,6 +12,7 @@
 #include <string.h>
 #include "Array.h"
 #define ndebug
+
 int PORTNUM=8000;
 char PATH[255]="PATH=bin:.";
 char PWD[255]="";
@@ -36,7 +37,7 @@ Array *split(char *str, const char *del) {
    }
    return list;
 } 
-
+ 
 typedef struct Cmd{
    int p_id;
    int argc;
