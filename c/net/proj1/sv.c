@@ -1,8 +1,11 @@
+#define PIPE_BUF 4096
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h> 
 #include <unistd.h> 
 #include <arpa/inet.h> 
+#include <sys/wait.h>
+#include <sys/stat.h>
 #include <sys/types.h> 
 #include <netinet/in.h> 
 #include <sys/socket.h> 
@@ -11,7 +14,8 @@
 #define queMAX 32767
 #include <string.h>
 #include "Array.h"
-#define ndebug
+#include <limits.h>
+#define debug
 
 int PORTNUM=8000;
 char PATH[255]="PATH=bin:.";
@@ -38,6 +42,26 @@ Array *split(char *str, const char *del) {
    return list;
 } 
  
+typedef struct PipeFD{
+   int out_fd;
+   int in_fd;
+}PipeFD;
+
+PipeFD newPipeFD(){
+   PipeFD fd;
+   pipe((int *)&fd);
+   return fd;
+}
+void closePipe(PipeFD fd){
+   close(fd.in_fd);
+   close(fd.out_fd);
+}
+void closeOutput(PipeFD fd){
+   close(fd.out_fd);
+}
+void closeInput(PipeFD fd){
+   close(fd.in_fd);
+}
 typedef struct Cmd{
    int p_id;
    int argc;
@@ -46,11 +70,14 @@ typedef struct Cmd{
    int dstpipe[2];
    int qi;
    int dst;
+   int readFd;
+   int writeFd;
    struct Cmd *parent;
    struct Cmd *first;
    struct Cmd *prev;
    struct Cmd *next;
 }Cmd;
+
 
 void freeCmd(Cmd *cmd){
    free(cmd);
@@ -68,6 +95,7 @@ Cmd getCmd(char *cmd,char *del ){
   c.parent=NULL;
   c.prev=NULL;
   c.next=NULL;
+  free(arr);
   return c;
 }
 
@@ -84,17 +112,16 @@ int spawn(Cmd *cmd)
 
    if (child != 0) {
       if(child>0){
-      if(cmd->prev!=NULL){
+         if(cmd->prev!=NULL){
+            if(cmd->pipe[1]==erro_fd){
+               erro_fd=2;
+            }
+            close(cmd->prev->pipe[0]);
+            close(cmd->prev->pipe[1]);
 
-      if(cmd->pipe[1]==erro_fd){
-         erro_fd=2;
-      }
-      else{
-         close(cmd->prev->pipe[0]);
-         close(cmd->prev->pipe[1]);
-      }
-      }
+         }
 
+      close(cmd->pipe[1]);
       cmd->p_id=child;
       }
       return child;
@@ -108,27 +135,42 @@ int spawn(Cmd *cmd)
       close(1);
       dup(cmd->dstpipe[0]);
       dup(cmd->dstpipe[1]);
+
+      close(cmd->dstpipe[0]);
+      close(cmd->dstpipe[1]);
+     if(cmd->prev!=NULL){
+        close(cmd->prev->pipe[1]);
+        close(cmd->prev->pipe[0]);
+     }
       if(erro_fd==2){
          close(2);
          dup(cmd->dstpipe[1]);
+         close(cmd->dstpipe[1]);
       }
       else
       {
-         //close(2);
-         //dup2(erro_fd,2);
+         close(2);
+         dup(erro_fd);
+         close(erro_fd);
       }
+     /* 
+      int i=0;
+      for(i=1024;i>2;i--){
+         close(i);
+      }
+      */
+      
       Cmd *next=cmd->first;
       while(next){
          close(next->pipe[0]);
          close(next->pipe[1]);
          next=next->next;
       }
-         execve(strcat(binPATH,prog), arg_list,env);
-         //fprintf(stderr, "%s: command not found\n",prog);
-      if(erro_fd!=2)
-         dprintf(erro_fd,"Unknown command: [%s].\n",prog);
-      else
-         fprintf(stdout,"Unknown command: [%s].\n",prog);
+         execv(strcat(binPATH,prog), arg_list);
+         fprintf(stderr,"Unknown command: [%s].\n",prog);
+         close(0);
+         close(1);
+         close(2);
          return 0;
      }
    return child;
@@ -213,33 +255,6 @@ int dup2Cmd(Cmd *cmd){
 
      }
 
-   /*
-     if(cmd->prev==NULL)
-         ddup2(cmd->parent->pipe[0],i);
-     else 
-         ddup2(cmd->prev->pipe[0],i);
-
-      if(cmd->dst==-1){
-         close(1);
-         dup(cmd->pipe[1]);
-      }
-      else if(cmd->next==NULL)
-         ddup2(cmd->parent->pipe[1],o);
-      else if(cmd->dst==cmd->qi)
-         ddup2(cmd->pipe[1],o);
-      else if(cmd->dst==cmd->next->qi)
-         ddup2(cmd->pipe[1],o);
-      else{
-         Cmd *np=cmd->next;
-         while (np){
-            if(cmd->dst==np->qi)
-               break;
-            np=np->next;
-         }
-         ddup2(np->prev->pipe[1],o);
-         }
-     */ 
-
    checkPipe(prev);
    checkPipe(next);
    int ri=prev->pipe[0];
@@ -247,8 +262,9 @@ int dup2Cmd(Cmd *cmd){
    cmd->dstpipe[0]=ri;
    cmd->dstpipe[1]=ro;
 }
-int main(int argc,char *argv[],char *envp[]){
 
+int main(int argc,char *argv[],char *envp[]){
+   printf("%d\n",PIPE_BUF);
    printf("Input Server Port:");
    char input[10];
    fgets(input,9,stdin);
@@ -310,6 +326,7 @@ int main(int argc,char *argv[],char *envp[]){
             char buffer[255];
 
             Cmd *cmd_que[queMAX];
+            
             memset(cmd_que,0,queMAX);
             int qi=0;
 
@@ -375,6 +392,7 @@ int main(int argc,char *argv[],char *envp[]){
                   c->first=NULL;
                   c->first=NULL;
                }
+
                Cmd *subCmd=malloc(sizeof(Cmd)*c->argc);
                Cmd *nextCmd=subCmd;
                for(i=0;i<c->argc;i++){
@@ -448,6 +466,7 @@ int main(int argc,char *argv[],char *envp[]){
                   }else if(child_pid<0){//fork error
                      printf("Shell Error may fork too much.\n");
                      break;
+                     //continue;
                   }
                   nextCmd=nextCmd->next;
                }
@@ -464,16 +483,16 @@ int main(int argc,char *argv[],char *envp[]){
                   //
                   do{
 
-                     if( waitpid(nextCmd->p_id, &status, WUNTRACED | WCONTINUED)==-1)
+                     if( waitpid(nextCmd->p_id, &status, WUNTRACED | WCONTINUED
+                          )==-1)
                         break;
                      
 #ifdef debug
                      dprintf(stdo_fd,"%d wait close status\n",nextCmd->p_id);
 #endif
                   }while(!WIFEXITED(status) && !WIFSIGNALED(status));
-                  if(nextCmd->pipe[1]==erro_fd){
-                     erro_fd=2;
-                  }
+
+                  //freeCmd(nextCmd);
                   nextCmd=nextCmd->next;
                }
               /* 

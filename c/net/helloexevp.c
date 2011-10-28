@@ -1,6 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+
 #include "Array.h"
 #include "String.h"
 #include "Array.c"
@@ -11,9 +15,15 @@ int spawn(char *prog, char **arg_list)
    child = fork();
 
    if (child != 0) {
-         wait();
-         return child;
-      } else {
+int status;
+      do{
+         waitpid(child, &status, WUNTRACED | WCONTINUED
+           );
+
+      }while(!WIFEXITED(status) && !WIFSIGNALED(status));
+
+      return child;
+   } else {
             execvp(prog, arg_list);
             fprintf(stderr, "spawn errorn");
             return -1;
@@ -22,6 +32,9 @@ int spawn(char *prog, char **arg_list)
 
 int main(int argc,char *argv[],char *envp[]){
    char cmd[255];
+
+   chdir("../");
+
    printf("cmd:");
    scanf("%[^\n]",cmd);
    Array *arr=split(cmd," ");

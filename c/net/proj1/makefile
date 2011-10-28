@@ -1,6 +1,6 @@
 CC=gcc
-maindir=$(shell pwd)
-mainc=$(shell basename $(main) |sed 's/.c//g')
+maindir=`pwd`
+mainc=`basename $(main) |sed 's/.c//g'`
 
 all:
 	$(CC) -o $(mainc).o $(mainc).c
