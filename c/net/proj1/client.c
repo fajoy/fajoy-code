@@ -117,7 +117,6 @@ int main(int argc,char *argv[])
 		  close(client_fd);
 		  exit(0);
 	  }
-	  usleep(100000);
   }
 
  } // end of while

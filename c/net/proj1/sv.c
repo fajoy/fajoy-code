@@ -15,7 +15,7 @@
 #include <string.h>
 #include "Array.h"
 #include <limits.h>
-#define debug
+#define ndebug
 
 int PORTNUM=8000;
 char PATH[255]="PATH=bin:.";
@@ -39,6 +39,7 @@ Array *split(char *str, const char *del) {
      char*ss=ArrayGet(list,i,char*);
      //printf("list[%d]=%s\n",i,ss);
    }
+   free(sub);
    return list;
 } 
  
@@ -83,10 +84,6 @@ typedef struct Cmd{
 }Cmd;
 
 
-void freeCmd(Cmd *cmd){
-   free(cmd);
-}
-
 Cmd getCmd(char *cmd,char *del ){
   Cmd c;
   Array *arr=split(cmd,del);
@@ -101,7 +98,6 @@ Cmd getCmd(char *cmd,char *del ){
   c.outPipe.out_fd=-1;
   c.writeFd=-1;
   c.readFd=-1;
-  free(arr);
   return c;
 }
 
@@ -229,6 +225,38 @@ int indexOf(char *str1,char *str2)
     return i;  
 } 
 
+   struct sockaddr_in dest; 
+   struct sockaddr_in serv;
+void showMotd(){
+            char *remote_ip=inet_ntoa(dest.sin_addr);
+            int remote_port=dest.sin_port;
+            dprintf(stdo_fd,"(%d)%s open\n",getpid(),remote_ip);
+
+            printf("**************************************************************\n");
+            printf("** Welcome to the information server, myserver.nctu.edu.tw. **\n");
+            printf("**************************************************************\n");
+            printf("** You are in the directory, %s/ras/.\n",getenv("PWD"));
+            printf("** This directory will be under \"/\", in this system.  \n");
+            printf("** This directory includes the following executable programs. \n");
+            printf("**\n"); 
+            printf("**\tbin/\n");
+            printf("**\ttest.html(test file)\n");
+            printf("**\n");
+            printf("**The directory bin/ includes:\n");
+            printf("**\tcat\n");
+            printf("**\tls\n");
+            printf("**\tremovetag\t\t(Remove HTML tags.)\n");
+            printf("**\tnumber  \t\t(Add a number in each line.)\n");
+            printf("**\n");
+            printf("** In addition, the following two commands are supported by ras. \n");
+            printf("**\tsetenv\t\n");
+            printf("**\tprintenv\t\n");
+            printf("** \n");
+
+
+     //       printf("Your From %s:%d\n",remote_ip,remote_port);
+}
+  
 int main(int argc,char *argv[],char *envp[]){
    printf("Pipe buffer size=%d\n",PIPE_BUF);
    printf("Input Server Port:");
@@ -244,8 +272,6 @@ int main(int argc,char *argv[],char *envp[]){
    printf("%s\n",binPATH) ;
    stdo_fd=dup(1);
    stdi_fd=dup(0);
-   struct sockaddr_in dest; 
-   struct sockaddr_in serv;
    int mysocket;         
    int socksize = sizeof(struct sockaddr_in);
 
@@ -283,25 +309,16 @@ int main(int argc,char *argv[],char *envp[]){
             dup(stdo_fd);
             continue;
          }else{
+
+            char *remote_ip=inet_ntoa(dest.sin_addr);
             erro_fd=-1;
             close(mysocket);
             close(stdi_fd);
-            char *remote_ip=inet_ntoa(dest.sin_addr);
-            int remote_port=dest.sin_port;
-            char msg[255];
             char buffer[255];
-
             PipeFD queFd[queMAX];
             memset(&queFd,-1,queMAX*sizeof(PipeFD));
             int qi=0;
-
-            dprintf(stdo_fd,"(%d)%s open\n",getpid(),remote_ip);
-            
-            printf("****************************************\n");
-            printf("** Welcome to the information server. **\n");
-            printf("****************************************\n");
-            printf("Your From %s:%d\n",remote_ip,remote_port);
-            fflush(stdout);
+            showMotd() ;
             
             PipeFD console;
             console.out_fd=dup(consocket);
@@ -330,11 +347,23 @@ int main(int argc,char *argv[],char *envp[]){
                if(strcmp(req,"printenv PATH")==0)
                {
                   printf("%s\n",PATH);
+                  closePipe(&queFd[qi]);
+                  qi++;
+                  qi%=queMAX;
                   continue;
                }else if(strncmp(req,"setenv PATH",11)==0){
                   sscanf(req,"setenv PATH %s",&PATH[5]);
+                  closePipe(&queFd[qi]);
+                  qi++;
+                  qi%=queMAX;
                   continue;
-               }else if(strncmp(req,"exit",4)==0){
+               }else if(strncmp(req,"noop",4)==0){
+                  closePipe(&queFd[qi]);
+                  qi++;
+                  qi%=queMAX;
+                  continue;
+               }
+               else if(strncmp(req,"exit",4)==0){
                   break;
                }
                int delay=0;
@@ -356,14 +385,14 @@ int main(int argc,char *argv[],char *envp[]){
                   if(nextCmd->argc==0)
                      continue;
                   if(c->first==NULL){
+                     erro_fd=-1;
                      c->first=nextCmd;
                      c->next=nextCmd;
                      if(!isNull(&queFd[qi])){
                         nextCmd->outPipe=queFd[qi];
                         nextCmd->readFd=queFd[qi].out_fd;
 
-                        if(erro_fd==queFd[qi].in_fd)
-                           erro_fd=-1;
+                        //if(erro_fd==queFd[qi].in_fd)
                   }
                   }
 
@@ -431,6 +460,7 @@ int main(int argc,char *argv[],char *envp[]){
                      closeOutput(&nextCmd->outPipe);
                   nextCmd=nextCmd->next;
                }
+
                free(subCmd);
                closePipe(&queFd[qi]);
                qi++;
