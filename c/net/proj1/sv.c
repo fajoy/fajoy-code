@@ -177,14 +177,25 @@ int setCmd(Cmd *cmd){
    for (i=1;i+1<cmd->argc;i++){
       if(strncmp(cmd->argv[i],">",1)==0)
       {
-         char * fpath=cmd->argv[i+1];
+         char *fpath=cmd->argv[i+1];
          if(strncmp(cmd->argv[i],">>",2)==0)
          fd=open(fpath,O_WRONLY|O_CREAT|O_APPEND,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP);
          else
          fd=open(fpath,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP);
          cmd->argv[i]=NULL;
          cmd->writeFd=fd;
-      }
+      
+      }else
+         if(strncmp(cmd->argv[i],"<",1)==0){
+            char *fpath=cmd->argv[i+1];
+            fd=open(fpath,O_RDONLY,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP);
+            cmd->argv[i]=NULL;
+            cmd->readFd=fd;
+         }
+
+
+                            
+      
    }
    if(cmd->readFd==-1){
       if(isNull(&cmd->outPipe)){
@@ -357,13 +368,7 @@ int main(int argc,char *argv[],char *envp[]){
                   qi++;
                   qi%=queMAX;
                   continue;
-               }else if(strncmp(req,"noop",4)==0){
-                  closePipe(&queFd[qi]);
-                  qi++;
-                  qi%=queMAX;
-                  continue;
-               }
-               else if(strncmp(req,"exit",4)==0){
+               }else if(strncmp(req,"exit",4)==0){
                   break;
                }
                int delay=0;
