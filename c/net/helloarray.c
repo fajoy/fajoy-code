@@ -13,8 +13,8 @@ int main(int argc,char *argv[],char *envp[])
    int arr_size=ToArray(stack,&arr);
    printf("arrsize=%d\n",arr_size);
    printf("stack[0]=%p [1]=%p\n",*STACK.address,*(STACK.address+1));
-   printf("pop=%d\n",pop(stack,int));
-   printf("pop=%d\n",pop(stack,int));
+   printf("pop=%d\n",*pop(stack,int*));
+   printf("pop=%d\n",*pop(stack,int*));
 
    printf("a=%d b=%d\n",a,b);
    int i;
