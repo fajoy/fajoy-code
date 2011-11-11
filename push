@@ -1,0 +1,3 @@
+#!/bin/bash
+echo "eZ7JW6pG4yp2"
+hg push
