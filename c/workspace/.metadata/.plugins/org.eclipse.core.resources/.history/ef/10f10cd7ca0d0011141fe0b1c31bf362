@@ -1,0 +1,14 @@
+/*
+ * ClientQueue.h
+ *
+ *  Created on: 2011/11/13
+ *      Author: fajoy
+ */
+
+#ifndef CLIENTQUEUE_H_
+#define CLIENTQUEUE_H_
+#include "Client.h"
+static Client clientQue[1024];
+static int flowNo;
+
+#endif /* CLIENTQUEUE_H_ */
