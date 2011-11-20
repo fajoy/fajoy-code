@@ -1,0 +1,16 @@
+/*
+ * Client.h
+ *
+ *  Created on: 2011/11/13
+ *      Author: fajoy
+ */
+
+#ifndef CLIENT_H_
+#define CLIENT_H_
+typedef stcuct Client{
+	int pid;
+	int name;
+
+}Client
+
+#endif /* CLIENT_H_ */

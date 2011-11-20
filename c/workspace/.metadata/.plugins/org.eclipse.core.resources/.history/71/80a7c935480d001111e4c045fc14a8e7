@@ -1,0 +1,78 @@
+################################################################################
+# Automatically-generated file. Do not edit!
+################################################################################
+
+# Add inputs and outputs from these tool invocations to the build variables 
+O_SRCS += \
+../helloSelect.o \
+../helloSem.o \
+../helloSemLock.o \
+../helloarray.o 
+
+C_SRCS += \
+../Array.c \
+../forktest.c \
+../hello.c \
+../helloMutiServ.c \
+../helloSelect.c \
+../helloSemLock.c \
+../helloServ.c \
+../helloServFd.c \
+../helloarray.c \
+../helloexevp.c \
+../hellofork.c \
+../hellopipe.c \
+../helloshell.c \
+../helloshell2.c \
+../hellosplit.c \
+../number.c \
+../shellServ.c 
+
+OBJS += \
+./Array.o \
+./forktest.o \
+./hello.o \
+./helloMutiServ.o \
+./helloSelect.o \
+./helloSemLock.o \
+./helloServ.o \
+./helloServFd.o \
+./helloarray.o \
+./helloexevp.o \
+./hellofork.o \
+./hellopipe.o \
+./helloshell.o \
+./helloshell2.o \
+./hellosplit.o \
+./number.o \
+./shellServ.o 
+
+C_DEPS += \
+./Array.d \
+./forktest.d \
+./hello.d \
+./helloMutiServ.d \
+./helloSelect.d \
+./helloSemLock.d \
+./helloServ.d \
+./helloServFd.d \
+./helloarray.d \
+./helloexevp.d \
+./hellofork.d \
+./hellopipe.d \
+./helloshell.d \
+./helloshell2.d \
+./hellosplit.d \
+./number.d \
+./shellServ.d 
+
+
+# Each subdirectory must supply rules for building sources it contributes
+%.o: ../%.c
+	@echo 'Building file: $<'
+	@echo 'Invoking: GCC C Compiler'
+	gcc -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
+	@echo 'Finished building: $<'
+	@echo ' '
+
+
