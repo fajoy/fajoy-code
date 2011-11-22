@@ -9,16 +9,80 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
-#include <unistd.h>
 #include <fcntl.h>
-#define queMAX 32767
 #include <string.h>
 #include <limits.h>
 #include <sys/select.h>
+#include <sys/shm.h>
+#include <sys/sem.h>
+#include <errno.h>
 #include "Array.h"
 #include "ClientQueue.h"
+
+#define SEMKEY 123L
+#define SHMKEY 111
+#define PERMS 0666
+
+static struct sembuf op_lock[2] = { { 0, 0, 0 }, { 0, 1, SEM_UNDO } };
+static struct sembuf op_unlock[1] = { { 0, -1, (IPC_NOWAIT | SEM_UNDO) } };
+
+int sem_id = -1;
+void lock() {
+
+	if (sem_id < 0) {
+		sem_id = semget(SEMKEY, 1, IPC_CREAT | PERMS);
+	}
+	semop(sem_id, &op_lock[0], 2);
+}
+
+void unlock() {
+	semop(sem_id, &op_unlock[0], 1);
+}
+
+static void setClientQueue() {
+	int shmid = shmget((key_t) SHMKEY, (size_t) sizeof(Client)
+			* ClientQueueLength, 0666 | IPC_CREAT);
+	Client* shmem = (Client*) shmat(shmid, (Client *) 0, 0);
+	memcpy(shmem, &clientQueue, (size_t) sizeof(Client) * ClientQueueLength);
+}
+static void getClientQueue() {
+	int shmid = shmget((key_t) SHMKEY, (size_t) sizeof(Client)
+			* ClientQueueLength, 0666 | IPC_CREAT);
+	Client* shmem = (Client*) shmat(shmid, (Client *) 0, 0);
+	memcpy(&clientQueue, shmem, (size_t) sizeof(Client) * ClientQueueLength);
+}
+static void beginUpdateClientQueue(){
+	lock();
+}
+static void endUpdateClientQueue(){
+	setClientQueue();
+	unlock();
+}
+static void whoCmd(int writeFd) {
+	lock();
+	getClientQueue();
+	unlock();
+	int i;
+	int pid = getpid();
+	dprintf(writeFd, "<ID>\t<nickname>\t<IP/port>\t<indicate me>\n");
+	for (i = 0; i < ClientQueueLength; i++) {
+		Client *c = &clientQueue[i];
+		char isme[] = "<- me";
+		if (c->pid > 0) {
+			if (c->pid == pid) {
+				dprintf(writeFd, "%d\t%s\t%s/%d\t%s\r\n", c->index + 1,
+						c->name, c->remote_ip, c->remote_port, isme);
+			} else {
+				dprintf(writeFd, "%d\t%s\t%s/%d\t\r\n", c->index + 1, c->name,
+						c->remote_ip, c->remote_port);
+			}
+		}
+	}
+}
+
 #define ndebug
 
+#define queMAX 32767
 int PORTNUM = 8000;
 
 int erro_fd;
@@ -58,9 +122,15 @@ void closePipe(PipeFD *fd) {
 	fd->out_fd = -1;
 }
 void closeOutput(PipeFD *fd) {
+#ifdef debug
+	dprintf(stdo_fd, "(%d)closeOuput(%d)  ", getpid(), fd->out_fd);
+#endif
 	close(fd->out_fd);
 }
 void closeInput(PipeFD *fd) {
+#ifdef debug
+	dprintf(stdo_fd, "(%d)closeInput(%d)  ", getpid(), fd->in_fd);
+#endif
 	close(fd->in_fd);
 }
 int isNull(PipeFD *fd) {
@@ -111,13 +181,14 @@ void setCmd(Cmd *cmd) {
 			cmd->argv[i] = NULL;
 			cmd->writeFd = fd;
 
-		} else if (strncmp(cmd->argv[i], "< ", 2) == 0) {
+		} else if (strncmp(cmd->argv[i], "<", 1) == 0) {
 			char *fpath = cmd->argv[i + 1];
 			fd = open(fpath, O_RDONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
 			cmd->argv[i] = NULL;
 			cmd->readFd = fd;
 		}
 	}
+
 	if (cmd->readFd == -1) {
 		if (isNull(&cmd->outPipe)) {
 			cmd->readFd = cmd->parent->outPipe.out_fd;
@@ -126,6 +197,7 @@ void setCmd(Cmd *cmd) {
 			cmd->readFd = cmd->outPipe.out_fd;
 		}
 	}
+
 	if (cmd->writeFd == -1) {
 		if (cmd->next == NULL)
 			cmd->writeFd = cmd->parent->outPipe.in_fd;
@@ -137,6 +209,22 @@ void setCmd(Cmd *cmd) {
 	}
 }
 
+static Client *client = NULL;
+PipeFD console;
+void showCmd(Cmd *cmd) {
+	int i;
+	for (i = 0; i < cmd->argc; i++) {
+		printf("argv[%d]=%s\n", i, cmd->argv[i]);
+	}
+
+}
+static void clearSignal() {
+	signal(SIGKILL, SIG_DFL);
+	signal(SIGINT, SIG_DFL);
+	signal(SIGTERM, SIG_DFL);
+	signal(SIGUSR1, SIG_DFL);
+	signal(SIGCLD, SIG_DFL);
+}
 int spawn(Cmd *cmd) {
 	char *prog = cmd->argv[0];
 	char **arg_list = cmd->argv;
@@ -153,46 +241,59 @@ int spawn(Cmd *cmd) {
 		}
 		return child;
 	} else {
+		//clearSignal();
+		//close(0);
+		//close(1);
+		//dup(cmd->readFd);
+		//dup(cmd->writeFd);
+		dup2(cmd->readFd, 0);
+		dup2(cmd->writeFd, 1);
+		if (erro_fd == -1) {
+			//close(2);
+			//dup(1);
+			//dup(console.out_fd);
+			dup2(console.out_fd, 2);
+		} else {
+			//close(2);
+			//dup(erro_fd);
+			dup2(erro_fd, 2);
+		}
 
 #ifdef debug
-		dprintf(stdo_fd,"(%d)%s ",getpid(),cmd->argv[0]);
-		if(!isNull(&cmd->outPipe))
-		dprintf(stdo_fd,"i(%d) o(%d) ",cmd->outPipe.in_fd,cmd->outPipe.out_fd);
-		dprintf(stdo_fd,"%d-%d %d-%d\n",cmd->readFd,0,cmd->writeFd,1);
+
+		dprintf(stdo_fd, "(%d)%s ", getpid(), cmd->argv[0]);
+		if (!isNull(&cmd->outPipe))
+			dprintf(stdo_fd, "i(%d) o(%d) ", cmd->outPipe.in_fd,
+					cmd->outPipe.out_fd);
+		int fo = fcntl(cmd->readFd, F_GETFL, 0);
+		int fi = fcntl(cmd->writeFd, F_GETFL, 0);
+		dprintf(stdo_fd, "%d-%d(%d) %d-%d(%d)\n", cmd->readFd, 0, fo,
+				cmd->writeFd, 1, fi);
 #endif
-		close(0);
-		close(1);
-		dup(cmd->readFd);
-		dup(cmd->writeFd);
-		if (erro_fd == -1) {
-			close(2);
-			dup(cmd->parent->outPipe.in_fd);
-		} else {
-			close(2);
-			dup(erro_fd);
-		}
 
 		int i = 0;
 		for (i = 1024; i > 2; i--) {
-			close(i);
-		}
-		execvp(prog, arg_list);
 
+#ifdef debug
+			if (i != stdo_fd)
+#endif
+				close(i);
+		}
+
+		int re_exec = execvp(prog, arg_list);
+
+#ifdef debug
+		dprintf(stdo_fd, "exec(%d)%s errno=(%d)%s ", strlen(prog), prog, errno,
+				strerror(errno));
+		//showCmd(cmd);
+#endif
 		fprintf(stderr, "Unknown command: [%s].\n", prog);
 		close(0);
 		close(1);
 		close(2);
-		exit(0);
+		exit(-1);
 	}
 	return child;
-}
-
-void showCmd(Cmd *cmd) {
-	int i;
-	for (i = 0; i < cmd->argc; i++) {
-		printf("argv[%d]=%s\n", i, cmd->argv[i]);
-	}
-
 }
 
 int indexOf(char *str1, char *str2) {
@@ -221,55 +322,48 @@ void waitOver(int pid) {
 
 struct sockaddr_in dest;
 struct sockaddr_in serv;
-static Client *client = NULL;
-PipeFD console;
+
 void showMotd() {
 	char *remote_ip = client->remote_ip;
 	dprintf(stdo_fd, "(%d)%s open\n", getpid(), remote_ip);
-
-	printf("**************************************************************\n");
-	printf("** Welcome to the information server, myserver.nctu.edu.tw. **\n");
-	printf("**************************************************************\n");
-	printf("** You are in the directory, %s.\n", getenv("PWD"));
-	printf("** This directory will be under \"/\", in this system.  \n");
-	printf("** This directory includes the following executable programs. \n");
-	printf("**\n");
-	printf("**\tbin/\n");
-	printf("**\ttest.html(test file)\n");
-	printf("**\n");
-	printf("**The directory bin/ includes:\n");
-	printf("**\tcat\n");
-	printf("**\tls\n");
-	printf("**\tremovetag\t\t(Remove HTML tags.)\n");
-	printf("**\tnumber  \t\t(Add a number in each line.)\n");
-	printf("**\n");
-	printf(
-			"** In addition, the following two commands are supported by ras. \n");
-	printf("**\tsetenv\t\n");
-	printf("**\tprintenv\t\n");
-	printf("** \n");
-
+	printf("****************************************\n");
+	printf("** Welcome to the information server. **\n");
+	printf("****************************************\n");
 	//       printf("Your From %s:%d\n",remote_ip,remote_port);
 }
-
+static void closeAllFd() {
+	int i = 0;
+	for (i = FD_SETSIZE - 1; i >= 0; i--) {
+		close(i);
+	}
+}
 static void closedClient(int signo) {
+	fflush(stdin);
+	fflush(stdout);
 	write(client->clientSendPipe[1], "close\n", 7);
-	close(client->clientSendPipe[1]);
-	close(client->mainSendPipe[0]);
-	close(client->conSocketFd);
-	close(console.out_fd);
-	close(console.in_fd);
-	close(0);
-	close(1);
-	close(2);
-	close(stdo_fd);
+	write(client->conSocketFd,'\0',1);
+	shutdown(client->conSocketFd,SHUT_RDWR);
+
+	/*
+	 close(client->clientSendPipe[1]);
+	 close(client->mainSendPipe[0]);
+	 close(client->conSocketFd);
+	 close(console.out_fd);
+	 close(console.in_fd);
+	 close(0);
+	 close(1);
+	 close(2);
+	 close(stdo_fd);
+	 */
+	closeAllFd();
 	exit(EXIT_SUCCESS);
 }
 
-PipeFD queFd[queMAX];;
+PipeFD queFd[queMAX];
+;
 Cmd *clientCmd;
 int qi;
-static void readClientCmd() {
+static void readClientCmd(fd_set *rfds_src) {
 	char buffer[255];
 	char tmp[255];
 	char *req;
@@ -283,22 +377,20 @@ static void readClientCmd() {
 	req = strtok(buffer, "\r\n/");
 
 #ifdef debug
-	dprintf(stdo_fd,"(%d+%d)%%%s\n",getpid(),qi,req);
+	dprintf(stdo_fd, "(%d+%d)%%%s\n", getpid(), qi, req);
 #endif
-	if (!req){
+	if (!req) {
 		closePipe(&queFd[qi]);
 		qi++;
 		qi %= queMAX;
-		printf("%% ");
 		fflush(stdout);
-		return ;
+		return;
 	}
 	if (strcmp(req, "printenv PATH") == 0) {
-		printf("PATH=%s\n", getenv("PATH"));
+		printf("PATH=%s\r\n", getenv("PATH"));
 		closePipe(&queFd[qi]);
 		qi++;
 		qi %= queMAX;
-		printf("%% ");
 		fflush(stdout);
 		return;
 	} else if (strncmp(req, "setenv PATH", 11) == 0) {
@@ -307,29 +399,42 @@ static void readClientCmd() {
 		closePipe(&queFd[qi]);
 		qi++;
 		qi %= queMAX;
-		printf("%% ");
 		fflush(stdout);
 		return;
 	} else if (strncmp(req, "exit", 4) == 0) {
 		closedClient(SIGKILL);
 	} else if (strncmp(req, "who", 3) == 0) {
-		write(client->clientSendPipe[1], "who\n", 4);
+		//write(client->clientSendPipe[1], "who\n", 4);
+		whoCmd(console.in_fd);
+		closePipe(&queFd[qi]);
 		qi++;
 		qi %= queMAX;
 		return;
 		//kill(mainPid, SIGUSR1);
-	}else if (strncmp(req, "name ", 5) == 0) {
+	} else if (strncmp(req, "name ", 5) == 0) {
 		write(client->clientSendPipe[1], req, strlen(req));
+		closePipe(&queFd[qi]);
 		qi++;
 		qi %= queMAX;
+		FD_CLR(0,rfds_src);
 		return;
 		//kill(mainPid, SIGUSR1);
-	}else if (strncmp(req, "yell ", 5) == 0) {
+	} else if (strncmp(req, "yell ", 5) == 0) {
 		write(client->clientSendPipe[1], req, strlen(req));
+		closePipe(&queFd[qi]);
 		qi++;
 		qi %= queMAX;
-		printf("%% ");
 		fflush(stdout);
+		FD_CLR(0,rfds_src);
+		return;
+		//kill(mainPid, SIGUSR1);
+	} else if (strncmp(req, "tell ", 5) == 0) {
+		write(client->clientSendPipe[1], req, strlen(req));
+		closePipe(&queFd[qi]);
+		qi++;
+		qi %= queMAX;
+		fflush(stdout);
+		FD_CLR(0,rfds_src);
 		return;
 		//kill(mainPid, SIGUSR1);
 	}
@@ -338,8 +443,9 @@ static void readClientCmd() {
 	int has_err_pipe = indexOf(req, "!");
 
 #ifdef debug
-	if(has_err_pipe!=-1)
-	dprintf(stdo_fd,"(%d->%d)has error pipe %d\n",getpid(),delay,has_err_pipe );
+	if (has_err_pipe != -1)
+		dprintf(stdo_fd, "(%d->%d)has error pipe %d\n", getpid(), delay,
+				has_err_pipe);
 #endif
 
 	Array *arr = split(req, "|!");
@@ -358,13 +464,13 @@ static void readClientCmd() {
 			clientCmd->next = nextCmd;
 			if (!isNull(&queFd[qi])) {
 				nextCmd->outPipe = queFd[qi];
-				nextCmd->readFd = queFd[qi].out_fd;
+				//nextCmd->readFd = queFd[qi].out_fd;
 
 				//if(erro_fd==queFd[qi].in_fd)
 			}
 		}
 
-		if (i + 1 == clientCmd->argc && i != 0) {//final
+		if (i == clientCmd->argc - 1 && i != 0) {//final
 			delay = atoi(nextCmd->argv[0]);
 			if (delay > 0)
 				break;
@@ -379,9 +485,10 @@ static void readClientCmd() {
 		prevCmd = nextCmd;
 		nextCmd++;
 	}
+
+	int dstqi = (qi + delay) % queMAX;
 	if (delay > 0) {
 
-		int dstqi = (qi + delay) % queMAX;
 		nextCmd = prevCmd;
 		if (isNull(&queFd[dstqi]))
 			queFd[dstqi] = newPipeFD();
@@ -390,16 +497,16 @@ static void readClientCmd() {
 			erro_fd = queFd[dstqi].in_fd;
 
 #ifdef debug
-		dprintf(stdo_fd,"(%d->%d)+%d",getpid(),delay,dstqi );
-		dprintf(stdo_fd,"i(%d) o(%d)\n",queFd[dstqi].in_fd,queFd[dstqi].out_fd );
+		dprintf(stdo_fd, "(%d->%d)+%d", getpid(), delay, dstqi);
+		dprintf(stdo_fd, "i(%d) o(%d)\n", queFd[dstqi].in_fd,
+				queFd[dstqi].out_fd);
 #endif
 	}
 
 	int child_pid;
 	nextCmd = clientCmd->first;
 	while (nextCmd) {
-		if (nextCmd->outPipe.in_fd != console.in_fd)
-			closeInput(&nextCmd->outPipe);
+
 		child_pid = spawn(nextCmd);
 
 		if (child_pid == 0) //child exec error
@@ -410,26 +517,37 @@ static void readClientCmd() {
 			break;
 			//continue;
 		}
-		waitOver(nextCmd->p_id);
-		if (nextCmd->outPipe.out_fd != console.out_fd)
-			closeOutput(&nextCmd->outPipe);
+		if (nextCmd->outPipe.in_fd != console.in_fd) {
+			if (isNull(&queFd[(qi + 1) % queMAX])) {
+				closeInput(&nextCmd->outPipe);
+			} else {
+				if (nextCmd->outPipe.in_fd != queFd[(qi + 1) % queMAX].in_fd)
+					closeInput(&nextCmd->outPipe);
+			}
+		}
+
+		if (delay == 0 || nextCmd->next != NULL)
+			waitOver(nextCmd->p_id);
+
+		if (nextCmd->outPipe.out_fd != console.out_fd) {
+			if (isNull(&queFd[dstqi])) {
+				closeOutput(&nextCmd->outPipe);
+			} else {
+				if (nextCmd->outPipe.out_fd != queFd[dstqi].out_fd)
+					closeOutput(&nextCmd->outPipe);
+			}
+		}
 		nextCmd = nextCmd->next;
 	}
 
-	free(subCmd);
+	//free(subCmd);
 	closePipe(&queFd[qi]);
 	qi++;
 	qi %= queMAX;
-	printf("%% ");
-	fflush(stdout);
 
 }
-static void clientInit(int listenSocketFd){
-	signal(SIGKILL, SIG_DFL);
-	signal(SIGINT, SIG_DFL);
-	signal(SIGTERM, SIG_DFL);
-	signal(SIGUSR1, SIG_DFL);
-	signal(SIGCLD, SIG_DFL);
+static void clientInit(int listenSocketFd) {
+	clearSignal();
 	signal(SIGINT, closedClient);
 	signal(SIGKILL, closedClient);
 	signal(SIGTERM, closedClient);
@@ -437,9 +555,10 @@ static void clientInit(int listenSocketFd){
 	close(client->mainSendPipe[1]);
 	close(0);
 	close(1);
+	int flags = fcntl(client->conSocketFd, F_GETFL, 0);
+	fcntl(client->conSocketFd, F_SETFL, flags | O_NONBLOCK);
 	dup(client->conSocketFd);
 	dup(client->conSocketFd);
-	int i;
 	erro_fd = -1;
 	close(listenSocketFd);
 	close(stdi_fd);
@@ -451,9 +570,9 @@ static void clientInit(int listenSocketFd){
 	clientCmd = (Cmd*) malloc(sizeof(Cmd));
 	clientCmd->p_id = getpid();
 	clientCmd->outPipe = console;
-
 }
-static void printfData(int fd_src,int fd_dst){
+
+static void printfData(int fd_src, int fd_dst) {
 	char tmp[1024];
 	int len = read(client->mainSendPipe[0], tmp, sizeof(tmp));
 	if (len > 0) {
@@ -462,46 +581,49 @@ static void printfData(int fd_src,int fd_dst){
 	}
 }
 static void clientHandler(int listenSocketFd) {
+
 	clientInit(listenSocketFd);
 	fd_set rfds_src;
 	fd_set rfds;
+	fd_set wfds_src;
+	fd_set wfds;
 	FD_ZERO(&rfds_src);
 	FD_SET(0,&rfds_src);
+	FD_SET(1,&wfds_src);
+	FD_SET(client->clientSendPipe[1],&wfds_src);
 	FD_SET(client->mainSendPipe[0],&rfds_src);
-	printf("%% ");
 	fflush(stdout);
+	int isCanClientReadCmd = 1;
 	while (1) {
-
 		bcopy((const void*) &rfds_src, (void*) &rfds, sizeof(fd_set));
+		bcopy((const void*) &wfds_src, (void*) &wfds, sizeof(fd_set));
 		int checkLength = __FD_SETSIZE;
-		if(FD_ISSET(0,&rfds_src)){
-
-		}
 		int s = select(checkLength, &rfds, (fd_set*) 0, (fd_set*) 0,
 				(struct timeval*) 0);
 
-		if(FD_ISSET(client->mainSendPipe[0],&rfds)){
-			printfData(client->mainSendPipe[0],1);
-			printf("%% ");
-			fflush(stdout);
-		}else
-		if(FD_ISSET(0,&rfds)){
-
-			readClientCmd();
+		if (FD_ISSET(client->mainSendPipe[0],&rfds)) {
+			printfData(client->mainSendPipe[0], 1);
 		}
+		if (isCanClientReadCmd == 1) {
+			write(1, "% ", 2);
+			isCanClientReadCmd = 0;
+			FD_SET(0,&rfds_src);
+		} else if (FD_ISSET(0,&rfds)) {
 
+			readClientCmd(&rfds_src);
+			isCanClientReadCmd = 1;
+
+		}
+		if (isCanClientReadCmd == 1&&FD_ISSET(0,&rfds_src)) {
+			write(1, "% ", 2);
+			isCanClientReadCmd = 0;
+			//FD_SET(0,&rfds_src);
+		}
 
 	}
 	closedClient(SIGKILL);
 }
 
-void mainKillHandler() {
-
-}
-
-static void InitMain() {
-
-}
 static int allClientAction(int(*action)(Client *)) {
 	int i = 0;
 	Client *c;
@@ -513,17 +635,25 @@ static int allClientAction(int(*action)(Client *)) {
 	}
 	return i;
 }
-static int getNullClinetIndex(Client * c) {
-	if (c->pid == 0)
-		return -1;
-	return 0;
-}
+
 static int acceptClient(int listenSocketFd) {
 	int socksize = sizeof(struct sockaddr_in);
 	int conSocketFd = accept(listenSocketFd, (struct sockaddr *) &dest,
 			(socklen_t*) &socksize);
 	if (conSocketFd >= 0) {
-		int clientIndex = allClientAction(getNullClinetIndex);
+		int clientIndex = clietnQueueFlowId;
+		int i=0;
+		while(clientQueue[clientIndex].pid>0){
+			clietnQueueFlowId++;
+			clietnQueueFlowId%=ClientQueueLength;
+			clientIndex=clietnQueueFlowId;
+			i++;
+			if(i>= ClientQueueLength){
+				clientIndex=ClientQueueLength;
+				break;
+			}
+		}
+		clietnQueueFlowId=0;
 		dprintf(stdo_fd, "%d.\n", clientIndex);
 		if (clientIndex >= ClientQueueLength) {
 			dprintf(conSocketFd, "server is person limit.\n");
@@ -533,21 +663,29 @@ static int acceptClient(int listenSocketFd) {
 		client = &clientQueue[clientIndex];
 
 		dprintf(stdo_fd, "%d+ accept ok\n", clientIndex);
-
+		beginUpdateClientQueue();
+		getClientQueue();
 		client->conSocketFd = conSocketFd;
 		client->index = clientIndex;
-		strcpy( client->name , ClientDefaultName);
-		client->remote_ip = inet_ntoa(dest.sin_addr);
+		strcpy(client->name, ClientDefaultName);
+		strcpy(client->remote_ip, inet_ntoa(dest.sin_addr));
 		client->remote_port = dest.sin_port;
 		pipe(client->mainSendPipe);
 		pipe(client->clientSendPipe);
+		endUpdateClientQueue();
 		//client->
 		client->pid = fork();
 		if (client->pid > 0) {//root
+			int i=client->pid ;
+			beginUpdateClientQueue();
+			getClientQueue();
+			client->pid=i;
+			endUpdateClientQueue();
 			close(client->mainSendPipe[0]);
 			close(client->clientSendPipe[1]);
 			close(client->conSocketFd);
 			client = NULL;
+
 			return clientIndex;
 		} else {
 			clientHandler(listenSocketFd);
@@ -557,32 +695,21 @@ static int acceptClient(int listenSocketFd) {
 	return -1;
 }
 
-static void whoCmd(int writeFd) {
-	int i;
-	printf("--who--\n");
-	for (i = 0; i < ClientQueueLength; i++) {
-		Client *c = &clientQueue[i];
-		if (c->pid > 0) {
-			dprintf(writeFd, "%d\t%s\t%s/%d\t\n", c->index+1, c->name,
-					c->remote_ip, c->remote_port);
-		}
-	}
-
-}
-
 int listenSocketFd;
 static int killClient(Client* c) {
 	if (c->pid > 0) {
 		kill(c->pid, SIGKILL);
 	}
-
+	beginUpdateClientQueue();
+	getClientQueue();
 	c->pid = 0;
-	close(c->conSocketFd);
+	shutdown(c->conSocketFd,2);
 	close(c->clientSendPipe[0]);
 	close(c->clientSendPipe[1]);
 	close(c->mainSendPipe[0]);
 	close(c->mainSendPipe[1]);
 	memset(c, 0, sizeof(Client));
+	endUpdateClientQueue();
 	return 0;
 }
 static void readCmd() {
@@ -611,27 +738,27 @@ void mainClientSignHandler(int signo) {
 
 	if (signo == SIGCLD) {
 		dprintf(stdo_fd, "kill%d \n", getpid());
+		kill(getpid(),SIGUSR1);
 	}
 
 }
 
-static void clientCastMsg(char *msg,int selfIndex){
+static void clientCastMsg(char *msg, int selfIndex) {
 	int i;
 	for (i = 0; i < ClientQueueLength; i++) {
 		Client *c = &clientQueue[i];
 		if (c->pid > 0) {
-		if(selfIndex!=i){
-
-				dprintf(c->mainSendPipe[1], "%s",msg);
-
-		}
+			if (selfIndex != i) {
+				if (strlen(msg) > 0)
+					dprintf(c->mainSendPipe[1], "%s", msg);
+			}
 		}
 	}
 }
 static void checkAllClientRpipe(fd_set* rfds_src, fd_set* rfds) {
 	int i;
 	char msg[255];
-	char rev[255];
+
 	Client *c;
 	for (i = 0; i < ClientQueueLength; i++) {
 		c = &clientQueue[i];
@@ -641,23 +768,50 @@ static void checkAllClientRpipe(fd_set* rfds_src, fd_set* rfds) {
 				int len = read(c->clientSendPipe[0], tmp, 1024);
 				if (len > 0) {
 					tmp[len] = '\0';
-					if(strncmp("who",tmp,3)==0){
-						whoCmd(c->mainSendPipe[1]);
-						dprintf(stdo_fd, "%s", tmp);
-					}else if(strncmp("name ",tmp,5)==0){
+					/*if(strncmp("who",tmp,3)==0){
+					 whoCmd(c->mainSendPipe[1]);
+					 dprintf(stdo_fd, "%s", tmp);
+					 }else
+					 */
+
+					if (strncmp("name ", tmp, 5) == 0) {
 						//sscanf(tmp,"name %s\n",c->name);
-						sprintf(c->name,"%s",&tmp[5]);
-						sprintf(msg,"*** User from %s/%d is named '%s'. ***\n",c->remote_ip,c->remote_port,c->name);
-						clientCastMsg(msg,-1);
+						sprintf(c->name, "%s", &tmp[5]);
+						setClientQueue();
+						sprintf(msg,
+								"*** User from %s/%d is named '%s'. ***\r\n",
+								c->remote_ip, c->remote_port, c->name);
+						clientCastMsg(msg, -1);
 						dprintf(stdo_fd, "%s", msg);
-					}else if(strncmp("yell ",tmp,5)==0){
-						sprintf(msg,"*** %s yelled %s\n",c->name,&tmp[5]);
-						clientCastMsg(msg,i);
+					} else if (strncmp("yell ", tmp, 5) == 0) {
+						sprintf(msg, "*** %s yelled ***:%s\r\n", c->name,
+								&tmp[5]);
+						clientCastMsg(msg, -1);
 						dprintf(stdo_fd, "%s", msg);
+					} else if (strncmp("tell ", tmp, 5) == 0) {
+						tmp[len] = '\n';
+						int i = atoi(&tmp[5]);
+						if (i > 0 && i <= ClientQueueLength) {
+							char pmsg[255];
+							sscanf(tmp,"tell %d %[^\n]",&i,pmsg);
+							int index=i-1;
+							if (clientQueue[index].pid > 0) {
+								sprintf(msg, "*** %s told you ***:%s\r\n",
+										c->name, pmsg);
+								dprintf(clientQueue[index].mainSendPipe[1], "%s", msg);
+								//dprintf(stdo_fd, "%s", tmp);
+							}else{
+								dprintf(c->mainSendPipe[1],"*** Error: user #%d does not exist yet. ***",i);
+							}
+						}else{
+							dprintf(c->mainSendPipe[1],"*** Error: user #%d does not exist yet. ***",i);
+						}
 					}
 
 				} else {
 					dprintf(stdo_fd, "%s client exit", c->name);
+					sprintf(msg, "*** User '%s' left. ***\r\n", c->name);
+					clientCastMsg(msg, i);
 					FD_CLR(c->clientSendPipe[0],rfds_src);
 					killClient(c);
 				}
@@ -676,7 +830,9 @@ int main(int argc, char *argv[], char *envp[]) {
 	setenv("PATH", "bin:.", 1);
 	printf("PWD=%s\n", getenv("PWD"));
 	printf("PATH=%s\n", getenv("PATH"));
-
+	beginUpdateClientQueue();
+	InitClientQueue();
+	endUpdateClientQueue();
 	printf("Input Server Port:");
 	char input[10];
 	fgets(input, 9, stdin);
@@ -708,12 +864,13 @@ int main(int argc, char *argv[], char *envp[]) {
 
 	signal(SIGUSR1, mainClientSignHandler);
 	signal(SIGCHLD, mainClientSignHandler);
-	InitClientQueue();
+
 	fd_set rfds_src;
 	fd_set rfds;
 	FD_ZERO(&rfds_src);
 	FD_SET(0,&rfds_src);
 	FD_SET(listenSocketFd,&rfds_src);
+
 	while (1) {
 		dprintf(stdo_fd, "# ");
 		bcopy((const void*) &rfds_src, (void*) &rfds, sizeof(fd_set));
@@ -728,13 +885,15 @@ int main(int argc, char *argv[], char *envp[]) {
 			int index = acceptClient(listenSocketFd);
 			Client *c = &clientQueue[index];
 			char msg[255];
-			sprintf(msg,"*** User '%s' entered from %s/%d. ***\n",c->name,c->remote_ip,c->remote_port);
-			clientCastMsg(msg,index);
+			sprintf(msg, "*** User '%s' entered from %s/%d. ***\r\n", c->name,
+					c->remote_ip, c->remote_port);
+			clientCastMsg(msg, -1);
 			FD_SET(c->clientSendPipe[0],&rfds_src);
 		}
 
 		if (FD_ISSET(0,&rfds)) {
 			readCmd();
+
 		}
 		checkAllClientRpipe(&rfds_src, &rfds);
 	}

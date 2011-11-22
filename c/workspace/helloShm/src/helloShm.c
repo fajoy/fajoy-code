@@ -56,7 +56,7 @@ void client(){
 }
 
 int funFork(void (*func)()) {
-	int node_id = 0;
+	int node_id = 0;r
 	node_id = fork();
 	if (node_id != 0) {//root
 		return node_id;

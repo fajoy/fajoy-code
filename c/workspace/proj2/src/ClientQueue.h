@@ -9,6 +9,7 @@
 #define CLIENTQUEUE_H_
 #include "Client.h"
 #define ClientQueueLength 30
+int clietnQueueFlowId=0;
 static Client clientQueue[ClientQueueLength];
 static void InitClientQueue(){
 	memset(&clientQueue[0], 0, ClientQueueLength * sizeof(Client));
