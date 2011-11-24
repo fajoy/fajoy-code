@@ -4374,3 +4374,124 @@ java.io.IOException: read error
 	at org.eclipse.debug.internal.core.OutputStreamMonitor.access$1(OutputStreamMonitor.java:134)
 	at org.eclipse.debug.internal.core.OutputStreamMonitor$1.run(OutputStreamMonitor.java:207)
 	at java.lang.Thread.run(Thread.java:636)
+!SESSION 2011-11-24 19:34:13.185 -----------------------------------------------
+eclipse.buildId=M20100211-1343
+java.version=1.6.0_20
+java.vendor=Sun Microsystems Inc.
+BootLoader constants: OS=linux, ARCH=x86, WS=gtk, NL=zh_TW
+Command-line arguments:  -os linux -ws gtk -arch x86
+
+!ENTRY org.eclipse.cdt.core 4 0 2011-11-24 19:35:32.478
+!MESSAGE Error while parsing /home/fajoy/workspace/proj2/src/proj2.c.
+!STACK 0
+java.lang.ArrayIndexOutOfBoundsException: 1238
+	at org.eclipse.cdt.internal.core.pdom.db.Database.getChunk(Database.java:270)
+	at org.eclipse.cdt.internal.core.pdom.db.Database.putRecPtr(Database.java:481)
+	at org.eclipse.cdt.internal.core.pdom.dom.PDOMInclude.setPrevInIncludedBy(PDOMInclude.java:205)
+	at org.eclipse.cdt.internal.core.pdom.dom.PDOMInclude.removeThisFromIncludedByChain(PDOMInclude.java:136)
+	at org.eclipse.cdt.internal.core.pdom.dom.PDOMInclude.delete(PDOMInclude.java:115)
+	at org.eclipse.cdt.internal.core.pdom.dom.PDOMFile.clear(PDOMFile.java:344)
+	at org.eclipse.cdt.internal.core.pdom.WritablePDOM.clearFile(WritablePDOM.java:80)
+	at org.eclipse.cdt.internal.core.index.WritableCIndex.clearFile(WritableCIndex.java:94)
+	at org.eclipse.cdt.internal.core.pdom.PDOMWriter.storeFileInIndex(PDOMWriter.java:448)
+	at org.eclipse.cdt.internal.core.pdom.PDOMWriter.storeSymbolsInIndex(PDOMWriter.java:206)
+	at org.eclipse.cdt.internal.core.pdom.PDOMWriter.addSymbols(PDOMWriter.java:163)
+	at org.eclipse.cdt.internal.core.pdom.AbstractIndexerTask.writeToIndex(AbstractIndexerTask.java:721)
+	at org.eclipse.cdt.internal.core.pdom.AbstractIndexerTask.parseFile(AbstractIndexerTask.java:679)
+	at org.eclipse.cdt.internal.core.pdom.AbstractIndexerTask.parseLinkage(AbstractIndexerTask.java:565)
+	at org.eclipse.cdt.internal.core.pdom.AbstractIndexerTask.runTask(AbstractIndexerTask.java:316)
+	at org.eclipse.cdt.internal.core.pdom.indexer.PDOMIndexerTask.run(PDOMIndexerTask.java:122)
+	at org.eclipse.cdt.internal.core.pdom.PDOMIndexerJob.run(PDOMIndexerJob.java:137)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.cdt.core 4 0 2011-11-24 19:54:00.067
+!MESSAGE Error while parsing /home/fajoy/workspace/proj2/src/proj2.c.
+!STACK 0
+java.lang.ArrayIndexOutOfBoundsException: 1238
+	at org.eclipse.cdt.internal.core.pdom.db.Database.getChunk(Database.java:270)
+	at org.eclipse.cdt.internal.core.pdom.db.Database.putRecPtr(Database.java:481)
+	at org.eclipse.cdt.internal.core.pdom.dom.PDOMInclude.setPrevInIncludedBy(PDOMInclude.java:205)
+	at org.eclipse.cdt.internal.core.pdom.dom.PDOMInclude.removeThisFromIncludedByChain(PDOMInclude.java:136)
+	at org.eclipse.cdt.internal.core.pdom.dom.PDOMInclude.delete(PDOMInclude.java:115)
+	at org.eclipse.cdt.internal.core.pdom.dom.PDOMFile.clear(PDOMFile.java:344)
+	at org.eclipse.cdt.internal.core.pdom.WritablePDOM.clearFile(WritablePDOM.java:80)
+	at org.eclipse.cdt.internal.core.index.WritableCIndex.clearFile(WritableCIndex.java:94)
+	at org.eclipse.cdt.internal.core.pdom.PDOMWriter.storeFileInIndex(PDOMWriter.java:448)
+	at org.eclipse.cdt.internal.core.pdom.PDOMWriter.storeSymbolsInIndex(PDOMWriter.java:206)
+	at org.eclipse.cdt.internal.core.pdom.PDOMWriter.addSymbols(PDOMWriter.java:163)
+	at org.eclipse.cdt.internal.core.pdom.AbstractIndexerTask.writeToIndex(AbstractIndexerTask.java:721)
+	at org.eclipse.cdt.internal.core.pdom.AbstractIndexerTask.parseFile(AbstractIndexerTask.java:679)
+	at org.eclipse.cdt.internal.core.pdom.AbstractIndexerTask.parseLinkage(AbstractIndexerTask.java:565)
+	at org.eclipse.cdt.internal.core.pdom.AbstractIndexerTask.runTask(AbstractIndexerTask.java:316)
+	at org.eclipse.cdt.internal.core.pdom.indexer.PDOMIndexerTask.run(PDOMIndexerTask.java:122)
+	at org.eclipse.cdt.internal.core.pdom.PDOMIndexerJob.run(PDOMIndexerJob.java:137)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.cdt.core 4 0 2011-11-24 20:00:18.644
+!MESSAGE Error while parsing /home/fajoy/workspace/proj2/src/proj2.c.
+!STACK 0
+java.lang.ArrayIndexOutOfBoundsException: 1238
+	at org.eclipse.cdt.internal.core.pdom.db.Database.getChunk(Database.java:270)
+	at org.eclipse.cdt.internal.core.pdom.db.Database.putRecPtr(Database.java:481)
+	at org.eclipse.cdt.internal.core.pdom.dom.PDOMInclude.setPrevInIncludedBy(PDOMInclude.java:205)
+	at org.eclipse.cdt.internal.core.pdom.dom.PDOMInclude.removeThisFromIncludedByChain(PDOMInclude.java:136)
+	at org.eclipse.cdt.internal.core.pdom.dom.PDOMInclude.delete(PDOMInclude.java:115)
+	at org.eclipse.cdt.internal.core.pdom.dom.PDOMFile.clear(PDOMFile.java:344)
+	at org.eclipse.cdt.internal.core.pdom.WritablePDOM.clearFile(WritablePDOM.java:80)
+	at org.eclipse.cdt.internal.core.index.WritableCIndex.clearFile(WritableCIndex.java:94)
+	at org.eclipse.cdt.internal.core.pdom.PDOMWriter.storeFileInIndex(PDOMWriter.java:448)
+	at org.eclipse.cdt.internal.core.pdom.PDOMWriter.storeSymbolsInIndex(PDOMWriter.java:206)
+	at org.eclipse.cdt.internal.core.pdom.PDOMWriter.addSymbols(PDOMWriter.java:163)
+	at org.eclipse.cdt.internal.core.pdom.AbstractIndexerTask.writeToIndex(AbstractIndexerTask.java:721)
+	at org.eclipse.cdt.internal.core.pdom.AbstractIndexerTask.parseFile(AbstractIndexerTask.java:679)
+	at org.eclipse.cdt.internal.core.pdom.AbstractIndexerTask.parseLinkage(AbstractIndexerTask.java:565)
+	at org.eclipse.cdt.internal.core.pdom.AbstractIndexerTask.runTask(AbstractIndexerTask.java:316)
+	at org.eclipse.cdt.internal.core.pdom.indexer.PDOMIndexerTask.run(PDOMIndexerTask.java:122)
+	at org.eclipse.cdt.internal.core.pdom.PDOMIndexerJob.run(PDOMIndexerJob.java:137)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.cdt.core 4 0 2011-11-24 20:09:30.574
+!MESSAGE Error while parsing /home/fajoy/workspace/proj2/src/proj2.c.
+!STACK 0
+java.lang.ArrayIndexOutOfBoundsException: 1238
+	at org.eclipse.cdt.internal.core.pdom.db.Database.getChunk(Database.java:270)
+	at org.eclipse.cdt.internal.core.pdom.db.Database.putRecPtr(Database.java:481)
+	at org.eclipse.cdt.internal.core.pdom.dom.PDOMInclude.setPrevInIncludedBy(PDOMInclude.java:205)
+	at org.eclipse.cdt.internal.core.pdom.dom.PDOMInclude.removeThisFromIncludedByChain(PDOMInclude.java:136)
+	at org.eclipse.cdt.internal.core.pdom.dom.PDOMInclude.delete(PDOMInclude.java:115)
+	at org.eclipse.cdt.internal.core.pdom.dom.PDOMFile.clear(PDOMFile.java:344)
+	at org.eclipse.cdt.internal.core.pdom.WritablePDOM.clearFile(WritablePDOM.java:80)
+	at org.eclipse.cdt.internal.core.index.WritableCIndex.clearFile(WritableCIndex.java:94)
+	at org.eclipse.cdt.internal.core.pdom.PDOMWriter.storeFileInIndex(PDOMWriter.java:448)
+	at org.eclipse.cdt.internal.core.pdom.PDOMWriter.storeSymbolsInIndex(PDOMWriter.java:206)
+	at org.eclipse.cdt.internal.core.pdom.PDOMWriter.addSymbols(PDOMWriter.java:163)
+	at org.eclipse.cdt.internal.core.pdom.AbstractIndexerTask.writeToIndex(AbstractIndexerTask.java:721)
+	at org.eclipse.cdt.internal.core.pdom.AbstractIndexerTask.parseFile(AbstractIndexerTask.java:679)
+	at org.eclipse.cdt.internal.core.pdom.AbstractIndexerTask.parseLinkage(AbstractIndexerTask.java:565)
+	at org.eclipse.cdt.internal.core.pdom.AbstractIndexerTask.runTask(AbstractIndexerTask.java:316)
+	at org.eclipse.cdt.internal.core.pdom.indexer.PDOMIndexerTask.run(PDOMIndexerTask.java:122)
+	at org.eclipse.cdt.internal.core.pdom.PDOMIndexerJob.run(PDOMIndexerJob.java:137)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)
+
+!ENTRY org.eclipse.cdt.core 4 0 2011-11-24 20:23:57.510
+!MESSAGE Error while parsing /home/fajoy/workspace/proj2/src/proj2.c.
+!STACK 0
+java.lang.ArrayIndexOutOfBoundsException: 1238
+	at org.eclipse.cdt.internal.core.pdom.db.Database.getChunk(Database.java:270)
+	at org.eclipse.cdt.internal.core.pdom.db.Database.putRecPtr(Database.java:481)
+	at org.eclipse.cdt.internal.core.pdom.dom.PDOMInclude.setPrevInIncludedBy(PDOMInclude.java:205)
+	at org.eclipse.cdt.internal.core.pdom.dom.PDOMInclude.removeThisFromIncludedByChain(PDOMInclude.java:136)
+	at org.eclipse.cdt.internal.core.pdom.dom.PDOMInclude.delete(PDOMInclude.java:115)
+	at org.eclipse.cdt.internal.core.pdom.dom.PDOMFile.clear(PDOMFile.java:344)
+	at org.eclipse.cdt.internal.core.pdom.WritablePDOM.clearFile(WritablePDOM.java:80)
+	at org.eclipse.cdt.internal.core.index.WritableCIndex.clearFile(WritableCIndex.java:94)
+	at org.eclipse.cdt.internal.core.pdom.PDOMWriter.storeFileInIndex(PDOMWriter.java:448)
+	at org.eclipse.cdt.internal.core.pdom.PDOMWriter.storeSymbolsInIndex(PDOMWriter.java:206)
+	at org.eclipse.cdt.internal.core.pdom.PDOMWriter.addSymbols(PDOMWriter.java:163)
+	at org.eclipse.cdt.internal.core.pdom.AbstractIndexerTask.writeToIndex(AbstractIndexerTask.java:721)
+	at org.eclipse.cdt.internal.core.pdom.AbstractIndexerTask.parseFile(AbstractIndexerTask.java:679)
+	at org.eclipse.cdt.internal.core.pdom.AbstractIndexerTask.parseLinkage(AbstractIndexerTask.java:565)
+	at org.eclipse.cdt.internal.core.pdom.AbstractIndexerTask.runTask(AbstractIndexerTask.java:316)
+	at org.eclipse.cdt.internal.core.pdom.indexer.PDOMIndexerTask.run(PDOMIndexerTask.java:122)
+	at org.eclipse.cdt.internal.core.pdom.PDOMIndexerJob.run(PDOMIndexerJob.java:137)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:55)

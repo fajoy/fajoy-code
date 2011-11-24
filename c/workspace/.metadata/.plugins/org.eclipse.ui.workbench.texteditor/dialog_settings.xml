@@ -1,28 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <section name="Workbench">
 	<section name="org.eclipse.ui.texteditor.FindReplaceDialog_dialogBounds">
-		<item value="606" key="DIALOG_WIDTH"/>
-		<item value="357" key="DIALOG_Y_ORIGIN"/>
-		<item value="693" key="DIALOG_HEIGHT"/>
-		<item value="732" key="DIALOG_X_ORIGIN"/>
+		<item value="666" key="DIALOG_WIDTH"/>
+		<item value="209" key="DIALOG_Y_ORIGIN"/>
+		<item value="361" key="DIALOG_X_ORIGIN"/>
+		<item value="753" key="DIALOG_HEIGHT"/>
 		<item value="1|Sans|10.0|0|GTK|1|" key="DIALOG_FONT_NAME"/>
 	</section>
 	<section name="org.eclipse.ui.texteditor.FindReplaceDialog">
 		<item value="false" key="wrap"/>
-		<item value="false" key="isRegEx"/>
 		<item value="false" key="casesensitive"/>
+		<item value="false" key="isRegEx"/>
 		<item value="false" key="incremental"/>
 		<item value="false" key="wholeword"/>
-		<item value="cmd_src" key="selection"/>
+		<item value="tell" key="selection"/>
 		<list key="findhistory">
+			<item value="tell"/>
+			<item value="&gt;|"/>
+			<item value="dup2"/>
 			<item value="cmd_src"/>
 			<item value="setcmd"/>
 			<item value="read("/>
 			<item value="ead"/>
 			<item value="0who"/>
-			<item value="who"/>
-			<item value="close"/>
-			<item value="accept"/>
 		</list>
 		<list key="replacehistory">
 		</list>

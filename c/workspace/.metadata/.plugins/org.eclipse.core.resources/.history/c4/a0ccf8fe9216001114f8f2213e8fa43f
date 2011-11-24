@@ -200,9 +200,6 @@ void setCmd(Cmd *cmd) {
                                  unlock();
 				//dprintf(1,"user exist\n");
 				if (client ->fifo_fd[1] == -1) {
-
-					has_err_pipe = indexOf(cmd_src, ">!");
-
 					beginUpdateClientQueue();
 					getClientQueue();
 					//fifoPipe(client->fifo_fd, client->fifo_path);
@@ -571,12 +568,6 @@ static void readClientCmd(fd_set *rfds_src) {
 	has_fifoOut = indexOf(req, ">|");
 	if (has_fifoOut > 0) {
 		req[has_fifoOut + 1] = ' ';
-	}else{
-		has_fifoOut = indexOf(req, ">!");
-		if (has_fifoOut > 0) {
-				req[has_fifoOut + 1] = ' ';
-				has_err_pipe=-1;
-		}
 	}
 
 	has_fifoIn = indexOf(req, "<");
@@ -952,7 +943,6 @@ static void checkAllClientRpipe(fd_set* rfds_src, fd_set* rfds) {
 						int i = atoi(&tmp[5]);
 						if (i > 0 && i <= ClientQueueLength) {
 							char pmsg[255];
-							memset(pmsg,0,255);
 							sscanf(tmp, "tell %d %[^\n]", &i, pmsg);
 							int index = i - 1;
 							if (clientQueue[index].pid > 0) {
