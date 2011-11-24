@@ -1,0 +1,6 @@
+0: 0: <!test.html>
+1: 1: <TITLE>Test<TITLE>
+2: 2:       <BODY>
+3: 3:          This is a <b>test</b> program for ras.
+4: 4: </BODY></TITLE>
+5: 5: </TITLE>
