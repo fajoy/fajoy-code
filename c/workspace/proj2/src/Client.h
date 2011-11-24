@@ -17,6 +17,8 @@ typedef struct Client{
 	int mainSendPipe[2];
 	int clientSendPipe[2];
 	int conSocketFd;
+	int fifo_fd[2];
+	char fifo_path[255];
 }Client;
 
 #endif /* CLIENT_H_ */

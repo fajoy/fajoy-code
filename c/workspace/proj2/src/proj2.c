@@ -19,14 +19,24 @@
 #include "Array.h"
 #include "ClientQueue.h"
 
-#define SEMKEY 123L
-#define SHMKEY 111
+#define SEMKEY 222L
+#define SHMKEY 222
 #define PERMS 0666
+static Client *client = NULL;
+void fifoPipe(int * fd, char *fifo_path) {
+	int status = mkfifo(fifo_path, 0666);
+	int tmp_out = open(fifo_path, O_RDONLY | O_NONBLOCK);
+	int tmp_in = open(fifo_path, O_WRONLY);
+	*fd = tmp_out;
+	fd += 1;
+	*fd = tmp_in;
+}
 
 static struct sembuf op_lock[2] = { { 0, 0, 0 }, { 0, 1, SEM_UNDO } };
 static struct sembuf op_unlock[1] = { { 0, -1, (IPC_NOWAIT | SEM_UNDO) } };
 
 int sem_id = -1;
+int fifo_sem_id = -1;
 void lock() {
 
 	if (sem_id < 0) {
@@ -38,6 +48,8 @@ void lock() {
 void unlock() {
 	semop(sem_id, &op_unlock[0], 1);
 }
+
+
 
 static void setClientQueue() {
 	int shmid = shmget((key_t) SHMKEY, (size_t) sizeof(Client)
@@ -51,10 +63,10 @@ static void getClientQueue() {
 	Client* shmem = (Client*) shmat(shmid, (Client *) 0, 0);
 	memcpy(&clientQueue, shmem, (size_t) sizeof(Client) * ClientQueueLength);
 }
-static void beginUpdateClientQueue(){
+static void beginUpdateClientQueue() {
 	lock();
 }
-static void endUpdateClientQueue(){
+static void endUpdateClientQueue() {
 	setClientQueue();
 	unlock();
 }
@@ -88,7 +100,9 @@ int PORTNUM = 8000;
 int erro_fd;
 int stdo_fd;
 int stdi_fd;
+fd_set client_rfds_src;
 static int mainPid = -1;
+static char cmd_src[255];
 
 Array *split(char *str, const char *del) {
 	char *root = strdup(str);
@@ -166,27 +180,135 @@ Cmd getCmd(char *cmd, char *del) {
 	return c;
 }
 
+int getNullFd() {
+	return open("/dev/null", O_RDWR);
+}
+int has_err_pipe = -1;
+int has_fifoOut = -1;
+int has_fifoIn = -1;
+int fifoInNumber = -1;
+
 void setCmd(Cmd *cmd) {
 	int i, fd = 1;
 
-	for (i = 1; i + 1 < cmd->argc; i++) {
+	for (i = 1; i < cmd->argc; i++) {
 		if (strncmp(cmd->argv[i], ">", 1) == 0) {
-			char *fpath = cmd->argv[i + 1];
-			if (strncmp(cmd->argv[i], ">>", 2) == 0)
-				fd = open(fpath, O_WRONLY | O_CREAT | O_APPEND, S_IRUSR
-						| S_IWUSR | S_IRGRP | S_IWGRP);
-			else
-				fd = open(fpath, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR
-						| S_IWUSR | S_IRGRP | S_IWGRP);
-			cmd->argv[i] = NULL;
-			cmd->writeFd = fd;
+
+			if (has_fifoOut > 0) {
+                                 lock();
+                                 getClientQueue();
+                                 unlock();
+				//dprintf(1,"user exist\n");
+				if (client ->fifo_fd[1] == -1) {
+					beginUpdateClientQueue();
+					getClientQueue();
+					//fifoPipe(client->fifo_fd, client->fifo_path);
+					
+				        client->fifo_fd[1] = open(client->fifo_path, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR
+							| S_IWUSR | S_IRGRP | S_IWGRP);
+					endUpdateClientQueue();
+					cmd->writeFd = client->fifo_fd[1];
+					char fifocmd[255];
+					sprintf(fifocmd,"fifo_w %s\n",cmd_src);
+					write(client->clientSendPipe[1], fifocmd, strlen(fifocmd));
+					FD_CLR(0,&client_rfds_src);
+				} else {
+					dprintf(1, "*** Error: your pipe already exists. ***\r");
+					cmd->writeFd = getNullFd();
+				}
+
+				cmd->argv[i] = NULL;
+				i++;
+			}
+
+			else {
+				char *fpath = cmd->argv[i + 1];
+				if (strncmp(cmd->argv[i], ">>", 2) == 0)
+					fd = open(fpath, O_WRONLY | O_CREAT | O_APPEND, S_IRUSR
+							| S_IWUSR | S_IRGRP | S_IWGRP);
+				else
+					fd = open(fpath, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR
+							| S_IWUSR | S_IRGRP | S_IWGRP);
+				cmd->argv[i] = NULL;
+				cmd->writeFd = fd;
+				i++;
+				cmd->argv[i] = NULL;
+			}
 
 		} else if (strncmp(cmd->argv[i], "<", 1) == 0) {
-			char *fpath = cmd->argv[i + 1];
-			fd = open(fpath, O_RDONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
 			cmd->argv[i] = NULL;
-			cmd->readFd = fd;
+			if (has_fifoIn > 0) {
+
+				int clientIndex = fifoInNumber - 1;
+				if (clientIndex >= 0 && clientIndex < ClientQueueLength) {
+
+					lock();
+					getClientQueue();
+					unlock();
+					Client *c = &clientQueue[clientIndex];
+					if (c->pid > 0) {
+						//if (c->fifo_fd[0] > 0) {
+						if (c->fifo_fd[1] > 0) {
+							beginUpdateClientQueue();
+							getClientQueue();
+							int fd[2];
+							//fifoPipe((int *)&fd, c->fifo_path);
+
+				                        fd[0] = open(c->fifo_path, O_RDONLY, S_IRUSR | S_IWUSR | S_IRGRP
+						               | S_IWGRP);
+							c->fifo_fd[1] = -1;
+							endUpdateClientQueue();
+							cmd->readFd = fd[0];
+							char fifocmd[255];
+							sprintf(fifocmd,"fifo_r %d %s\n",clientIndex,cmd_src);
+							write(client->clientSendPipe[1], fifocmd, strlen(fifocmd));
+							FD_CLR(0,&client_rfds_src);
+							//close(fd[1]);
+						} else {
+							dprintf(
+									1,
+									"*** Error: the pipe from #%d does not exist yet. ***\r\n",
+									fifoInNumber);
+							cmd->readFd = getNullFd();
+					        cmd->writeFd = getNullFd();
+
+
+						}
+					} else {
+						dprintf(
+								1,
+								"*** Error: the pipe from #%d does not exist yet. ***\r\n",
+								fifoInNumber);
+						cmd->readFd = getNullFd();
+					        cmd->writeFd = getNullFd();
+					}
+
+				}
+
+				else {
+					dprintf(
+							1,
+							"*** Error: the pipe from #%d does not exist yet. ***\r\n",
+							fifoInNumber);
+					cmd->readFd = getNullFd();
+					cmd->writeFd = getNullFd();
+				}
+
+				cmd->argv[i] = NULL;
+			} else {
+				char *fpath = cmd->argv[i + 1];
+				fd = open(fpath, O_RDONLY, S_IRUSR | S_IWUSR | S_IRGRP
+						| S_IWGRP);
+				dprintf(stdo_fd, "in%s\n", cmd->argv[i]);
+				cmd->readFd = fd;
+				cmd->argv[i] = NULL;
+				i++;
+				cmd->argv[i] = NULL;
+
+			}
+
 		}
+
 	}
 
 	if (cmd->readFd == -1) {
@@ -209,7 +331,6 @@ void setCmd(Cmd *cmd) {
 	}
 }
 
-static Client *client = NULL;
 PipeFD console;
 void showCmd(Cmd *cmd) {
 	int i;
@@ -223,7 +344,8 @@ static void clearSignal() {
 	signal(SIGINT, SIG_DFL);
 	signal(SIGTERM, SIG_DFL);
 	signal(SIGUSR1, SIG_DFL);
-	signal(SIGCLD, SIG_DFL);
+	signal(SIGCHLD, SIG_DFL);
+	signal(SIGPIPE,SIG_DFL);
 }
 int spawn(Cmd *cmd) {
 	char *prog = cmd->argv[0];
@@ -263,8 +385,8 @@ int spawn(Cmd *cmd) {
 
 		dprintf(stdo_fd, "(%d)%s ", getpid(), cmd->argv[0]);
 		if (!isNull(&cmd->outPipe))
-			dprintf(stdo_fd, "i(%d) o(%d) ", cmd->outPipe.in_fd,
-					cmd->outPipe.out_fd);
+		dprintf(stdo_fd, "i(%d) o(%d) ", cmd->outPipe.in_fd,
+				cmd->outPipe.out_fd);
 		int fo = fcntl(cmd->readFd, F_GETFL, 0);
 		int fi = fcntl(cmd->writeFd, F_GETFL, 0);
 		dprintf(stdo_fd, "%d-%d(%d) %d-%d(%d)\n", cmd->readFd, 0, fo,
@@ -277,7 +399,7 @@ int spawn(Cmd *cmd) {
 #ifdef debug
 			if (i != stdo_fd)
 #endif
-				close(i);
+			close(i);
 		}
 
 		int re_exec = execvp(prog, arg_list);
@@ -341,8 +463,8 @@ static void closedClient(int signo) {
 	fflush(stdin);
 	fflush(stdout);
 	write(client->clientSendPipe[1], "close\n", 7);
-	write(client->conSocketFd,'\0',1);
-	shutdown(client->conSocketFd,SHUT_RDWR);
+	write(client->conSocketFd, '\0', 1);
+	shutdown(client->conSocketFd, SHUT_RDWR);
 
 	/*
 	 close(client->clientSendPipe[1]);
@@ -364,6 +486,7 @@ PipeFD queFd[queMAX];
 Cmd *clientCmd;
 int qi;
 static void readClientCmd(fd_set *rfds_src) {
+
 	char buffer[255];
 	char tmp[255];
 	char *req;
@@ -374,6 +497,7 @@ static void readClientCmd(fd_set *rfds_src) {
 	if (!fgets(buffer, 255, stdin)) {
 		closedClient(SIGKILL);
 	}
+	sscanf(buffer,"%[^\r\n]",cmd_src);
 	req = strtok(buffer, "\r\n/");
 
 #ifdef debug
@@ -434,18 +558,33 @@ static void readClientCmd(fd_set *rfds_src) {
 		qi++;
 		qi %= queMAX;
 		fflush(stdout);
-		FD_CLR(0,rfds_src);
+		//FD_CLR(0,rfds_src);
 		return;
 		//kill(mainPid, SIGUSR1);
 	}
 
 	int delay = 0;
-	int has_err_pipe = indexOf(req, "!");
+	has_err_pipe = indexOf(req, "!");
+	has_fifoOut = indexOf(req, ">|");
+	if (has_fifoOut > 0) {
+		req[has_fifoOut + 1] = ' ';
+	}
+
+	has_fifoIn = indexOf(req, "<");
+
+	fifoInNumber = -1;
+	if (has_fifoIn > 0) {
+		if (req[has_fifoIn + 1] == ' ') {
+			has_fifoIn = -1;
+		} else {
+			fifoInNumber = atoi(&req[has_fifoIn + 1]);
+		}
+	}
 
 #ifdef debug
 	if (has_err_pipe != -1)
-		dprintf(stdo_fd, "(%d->%d)has error pipe %d\n", getpid(), delay,
-				has_err_pipe);
+	dprintf(stdo_fd, "(%d->%d)has error pipe %d\n", getpid(), delay,
+			has_err_pipe);
 #endif
 
 	Array *arr = split(req, "|!");
@@ -583,19 +722,19 @@ static void printfData(int fd_src, int fd_dst) {
 static void clientHandler(int listenSocketFd) {
 
 	clientInit(listenSocketFd);
-	fd_set rfds_src;
+
 	fd_set rfds;
 	fd_set wfds_src;
 	fd_set wfds;
-	FD_ZERO(&rfds_src);
-	FD_SET(0,&rfds_src);
+	FD_ZERO(&client_rfds_src);
+	FD_SET(0,&client_rfds_src);
 	FD_SET(1,&wfds_src);
 	FD_SET(client->clientSendPipe[1],&wfds_src);
-	FD_SET(client->mainSendPipe[0],&rfds_src);
+	FD_SET(client->mainSendPipe[0],&client_rfds_src);
 	fflush(stdout);
 	int isCanClientReadCmd = 1;
 	while (1) {
-		bcopy((const void*) &rfds_src, (void*) &rfds, sizeof(fd_set));
+		bcopy((const void*) &client_rfds_src, (void*) &rfds, sizeof(fd_set));
 		bcopy((const void*) &wfds_src, (void*) &wfds, sizeof(fd_set));
 		int checkLength = __FD_SETSIZE;
 		int s = select(checkLength, &rfds, (fd_set*) 0, (fd_set*) 0,
@@ -607,14 +746,14 @@ static void clientHandler(int listenSocketFd) {
 		if (isCanClientReadCmd == 1) {
 			write(1, "% ", 2);
 			isCanClientReadCmd = 0;
-			FD_SET(0,&rfds_src);
+			FD_SET(0,&client_rfds_src);
 		} else if (FD_ISSET(0,&rfds)) {
 
-			readClientCmd(&rfds_src);
+			readClientCmd(&client_rfds_src);
 			isCanClientReadCmd = 1;
 
 		}
-		if (isCanClientReadCmd == 1&&FD_ISSET(0,&rfds_src)) {
+		if (isCanClientReadCmd == 1 && FD_ISSET(0,&client_rfds_src)) {
 			write(1, "% ", 2);
 			isCanClientReadCmd = 0;
 			//FD_SET(0,&rfds_src);
@@ -642,18 +781,18 @@ static int acceptClient(int listenSocketFd) {
 			(socklen_t*) &socksize);
 	if (conSocketFd >= 0) {
 		int clientIndex = clietnQueueFlowId;
-		int i=0;
-		while(clientQueue[clientIndex].pid>0){
+		int i = 0;
+		while (clientQueue[clientIndex].pid > 0) {
 			clietnQueueFlowId++;
-			clietnQueueFlowId%=ClientQueueLength;
-			clientIndex=clietnQueueFlowId;
+			clietnQueueFlowId %= ClientQueueLength;
+			clientIndex = clietnQueueFlowId;
 			i++;
-			if(i>= ClientQueueLength){
-				clientIndex=ClientQueueLength;
+			if (i >= ClientQueueLength) {
+				clientIndex = ClientQueueLength;
 				break;
 			}
 		}
-		clietnQueueFlowId=0;
+		clietnQueueFlowId = 0;
 		dprintf(stdo_fd, "%d.\n", clientIndex);
 		if (clientIndex >= ClientQueueLength) {
 			dprintf(conSocketFd, "server is person limit.\n");
@@ -670,16 +809,19 @@ static int acceptClient(int listenSocketFd) {
 		strcpy(client->name, ClientDefaultName);
 		strcpy(client->remote_ip, inet_ntoa(dest.sin_addr));
 		client->remote_port = dest.sin_port;
+		client->fifo_fd[0] = -1;
+		client->fifo_fd[1] = -1;
+		sprintf(client->fifo_path, "/tmp/proj2fifo%d", clientIndex);
 		pipe(client->mainSendPipe);
 		pipe(client->clientSendPipe);
 		endUpdateClientQueue();
 		//client->
 		client->pid = fork();
 		if (client->pid > 0) {//root
-			int i=client->pid ;
+			int i = client->pid;
 			beginUpdateClientQueue();
 			getClientQueue();
-			client->pid=i;
+			client->pid = i;
 			endUpdateClientQueue();
 			close(client->mainSendPipe[0]);
 			close(client->clientSendPipe[1]);
@@ -699,17 +841,18 @@ int listenSocketFd;
 static int killClient(Client* c) {
 	if (c->pid > 0) {
 		kill(c->pid, SIGKILL);
-	}
+	
 	beginUpdateClientQueue();
 	getClientQueue();
 	c->pid = 0;
-	shutdown(c->conSocketFd,2);
+	shutdown(c->conSocketFd, 2);
 	close(c->clientSendPipe[0]);
-	close(c->clientSendPipe[1]);
-	close(c->mainSendPipe[0]);
+	//close(c->clientSendPipe[1]);
+	//close(c->mainSendPipe[0]);
 	close(c->mainSendPipe[1]);
 	memset(c, 0, sizeof(Client));
 	endUpdateClientQueue();
+        }
 	return 0;
 }
 static void readCmd() {
@@ -718,7 +861,7 @@ static void readCmd() {
 	if (strcmp(line, "who\n") == 0) {
 		whoCmd(stdo_fd);
 	} else if (strcmp(line, "kill\n") == 0) {
-		killClient(&clientQueue[0]);
+	//	killClient(&clientQueue[0]);
 	}
 	//printf("sss:%s",input);
 }
@@ -730,20 +873,24 @@ static void closedMain() {
 }
 void mainClientSignHandler(int signo) {
 
-	int oldmask = sigblock(sigmask(SIGUSR1));
+	//int oldmask = sigblock(sigmask(SIGUSR1));
 	if (signo == SIGUSR1) {
 		dprintf(stdo_fd, "user1\n");
 	}
-	sigsetmask(oldmask);
-
-	if (signo == SIGCLD) {
+	//sigsetmask(oldmask);
+        if (signo == SIGPIPE){
+		dprintf(stdo_fd, "pipe broke%d\n",getpid());
+        }
+	if (signo == SIGCHLD) {
 		dprintf(stdo_fd, "kill%d \n", getpid());
-		kill(getpid(),SIGUSR1);
+	        //kill(getpid(), SIGUSR1);
 	}
 
 }
 
 static void clientCastMsg(char *msg, int selfIndex) {
+         lock();
+         getClientQueue();
 	int i;
 	for (i = 0; i < ClientQueueLength; i++) {
 		Client *c = &clientQueue[i];
@@ -754,11 +901,14 @@ static void clientCastMsg(char *msg, int selfIndex) {
 			}
 		}
 	}
+	unlock();
 }
 static void checkAllClientRpipe(fd_set* rfds_src, fd_set* rfds) {
 	int i;
 	char msg[255];
-
+	lock();
+	getClientQueue();
+	unlock();
 	Client *c;
 	for (i = 0; i < ClientQueueLength; i++) {
 		c = &clientQueue[i];
@@ -779,7 +929,7 @@ static void checkAllClientRpipe(fd_set* rfds_src, fd_set* rfds) {
 						sprintf(c->name, "%s", &tmp[5]);
 						setClientQueue();
 						sprintf(msg,
-								"*** User from %s/%d is named '%s'. ***\r\n",
+								"*** User  from %s/%d is named '%s'. ***\r\n",
 								c->remote_ip, c->remote_port, c->name);
 						clientCastMsg(msg, -1);
 						dprintf(stdo_fd, "%s", msg);
@@ -793,20 +943,45 @@ static void checkAllClientRpipe(fd_set* rfds_src, fd_set* rfds) {
 						int i = atoi(&tmp[5]);
 						if (i > 0 && i <= ClientQueueLength) {
 							char pmsg[255];
-							sscanf(tmp,"tell %d %[^\n]",&i,pmsg);
-							int index=i-1;
+							sscanf(tmp, "tell %d %[^\n]", &i, pmsg);
+							int index = i - 1;
 							if (clientQueue[index].pid > 0) {
 								sprintf(msg, "*** %s told you ***:%s\r\n",
 										c->name, pmsg);
-								dprintf(clientQueue[index].mainSendPipe[1], "%s", msg);
+								dprintf(clientQueue[index].mainSendPipe[1],
+										"%s", msg);
 								//dprintf(stdo_fd, "%s", tmp);
-							}else{
-								dprintf(c->mainSendPipe[1],"*** Error: user #%d does not exist yet. ***",i);
+							} else {
+								dprintf(
+										c->mainSendPipe[1],
+										"*** Error: user #%d does not exist yet. ***\r\n",
+										i);
 							}
-						}else{
-							dprintf(c->mainSendPipe[1],"*** Error: user #%d does not exist yet. ***",i);
+
+						} else {
+							dprintf(
+									c->mainSendPipe[1],
+									"*** Error: user #%d does not exist yet. ***\r\n",
+									i);
 						}
+					}else if (strncmp("fifo_w", tmp, 6) == 0) {
+						char ccmd[255];
+						sscanf(tmp, "fifo_w %[^\n]", ccmd);
+						sprintf(msg, "*** %s (#%d) just piped '%s' into his/her pipe. ***\r\n", c->name,
+								c->index+1,ccmd);
+						clientCastMsg(msg, -1);
+						dprintf(stdo_fd, "%s", msg);
+					}else if (strncmp("fifo_r", tmp, 6) == 0) {
+						char ccmd[255];
+						int revice_i;
+						sscanf(tmp, "fifo_r %d %[^\n]",&revice_i, ccmd);
+						Client *c2=&clientQueue[revice_i];
+						sprintf(msg, "*** %s (#%d) just received the pipe from %s (#%d) by '%s' ***\n", c->name,
+								c->index+1,c2->name,revice_i+1,ccmd);
+						clientCastMsg(msg, -1);
+						dprintf(stdo_fd, "%s", msg);
 					}
+
 
 				} else {
 					dprintf(stdo_fd, "%s client exit", c->name);
@@ -819,6 +994,7 @@ static void checkAllClientRpipe(fd_set* rfds_src, fd_set* rfds) {
 		}
 	}
 }
+fd_set main_rfds_src;
 int main(int argc, char *argv[], char *envp[]) {
 	printf("Pipe buffer size=%d\n", PIPE_BUF);
 	printf("FD size=%d\n", __FD_SETSIZE);
@@ -864,16 +1040,16 @@ int main(int argc, char *argv[], char *envp[]) {
 
 	signal(SIGUSR1, mainClientSignHandler);
 	signal(SIGCHLD, mainClientSignHandler);
+	signal(SIGPIPE,mainClientSignHandler);
 
-	fd_set rfds_src;
 	fd_set rfds;
-	FD_ZERO(&rfds_src);
-	FD_SET(0,&rfds_src);
-	FD_SET(listenSocketFd,&rfds_src);
+	FD_ZERO(&main_rfds_src);
+	FD_SET(0,&main_rfds_src);
+	FD_SET(listenSocketFd,&main_rfds_src);
 
 	while (1) {
 		dprintf(stdo_fd, "# ");
-		bcopy((const void*) &rfds_src, (void*) &rfds, sizeof(fd_set));
+		bcopy((const void*) &main_rfds_src, (void*) &rfds, sizeof(fd_set));
 		int checkLength = __FD_SETSIZE;
 		int s = select(checkLength, &rfds, (fd_set*) 0, (fd_set*) 0,
 				(struct timeval*) 0);
@@ -888,14 +1064,14 @@ int main(int argc, char *argv[], char *envp[]) {
 			sprintf(msg, "*** User '%s' entered from %s/%d. ***\r\n", c->name,
 					c->remote_ip, c->remote_port);
 			clientCastMsg(msg, -1);
-			FD_SET(c->clientSendPipe[0],&rfds_src);
+			FD_SET(c->clientSendPipe[0],&main_rfds_src);
 		}
 
 		if (FD_ISSET(0,&rfds)) {
 			readCmd();
 
 		}
-		checkAllClientRpipe(&rfds_src, &rfds);
+		checkAllClientRpipe(&main_rfds_src, &rfds);
 	}
 
 	dprintf(stdo_fd, "server stop\n");
