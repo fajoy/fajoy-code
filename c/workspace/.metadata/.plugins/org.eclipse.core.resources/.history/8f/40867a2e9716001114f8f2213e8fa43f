@@ -952,7 +952,6 @@ static void checkAllClientRpipe(fd_set* rfds_src, fd_set* rfds) {
 						int i = atoi(&tmp[5]);
 						if (i > 0 && i <= ClientQueueLength) {
 							char pmsg[255];
-							memset(pmsg,0,255);
 							sscanf(tmp, "tell %d %[^\n]", &i, pmsg);
 							int index = i - 1;
 							if (clientQueue[index].pid > 0) {
