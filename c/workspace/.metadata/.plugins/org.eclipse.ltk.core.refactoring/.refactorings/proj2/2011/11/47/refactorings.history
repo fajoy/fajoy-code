@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<session version="1.0">
-<refactoring comment="Rename resource &apos;proj2/src/ClinetQueue&apos; to &apos;ClinetQueue.h\&apos;" description="Rename resource &apos;ClinetQueue&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="src/ClinetQueue" name="ClinetQueue.h\" stamp="1321161396608" updateReferences="true"/>
-</session>
