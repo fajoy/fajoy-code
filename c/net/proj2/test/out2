@@ -3,88 +3,88 @@ login0
 0| ****************************************
 0| ** Welcome to the information server. **
 0| ****************************************
-0| *** User '(no name)' entered from 127.0.0.1/31919. ***
+0| *** User '(no name)' entered from 127.0.0.1/57318. ***
 0| % 
 
 0 % who
 0| <ID>	<nickname>	<IP/port>	<indicate me>
-0| 1	(no name)	127.0.0.1/31919	<- me
+0| 1	(no name)	127.0.0.1/57318	<- me
 0| % 
 
 login1
-0| *** User '(no name)' entered from 127.0.0.1/32175. ***
+0| *** User '(no name)' entered from 127.0.0.1/57574. ***
 1| ****************************************
 1| ** Welcome to the information server. **
 1| ****************************************
-1| *** User '(no name)' entered from 127.0.0.1/32175. ***
+1| *** User '(no name)' entered from 127.0.0.1/57574. ***
 1| % 
 
 1 % name user1
-0| *** User  from 127.0.0.1/32175 is named 'user1'. ***
-1| *** User  from 127.0.0.1/32175 is named 'user1'. ***
+0| *** User  from 127.0.0.1/57574 is named 'user1'. ***
+1| *** User  from 127.0.0.1/57574 is named 'user1'. ***
 1| % 
 
 1 % who
 1| <ID>	<nickname>	<IP/port>	<indicate me>
-1| 1	(no name)	127.0.0.1/31919	
-1| 2	user1	127.0.0.1/32175	<- me
+1| 1	(no name)	127.0.0.1/57318	
+1| 2	user1	127.0.0.1/57574	<- me
 1| % 
 
 0 % name user0
-0| *** User  from 127.0.0.1/31919 is named 'user0'. ***
+0| *** User  from 127.0.0.1/57318 is named 'user0'. ***
 0| % 
-1| *** User  from 127.0.0.1/31919 is named 'user0'. ***
+1| *** User  from 127.0.0.1/57318 is named 'user0'. ***
 
 0 % name user00
-0| *** User  from 127.0.0.1/31919 is named 'user00'. ***
+0| *** User  from 127.0.0.1/57318 is named 'user00'. ***
 0| % 
-1| *** User  from 127.0.0.1/31919 is named 'user00'. ***
+1| *** User  from 127.0.0.1/57318 is named 'user00'. ***
 
 0 % name user000
-0| *** User  from 127.0.0.1/31919 is named 'user000'. ***
+0| *** User  from 127.0.0.1/57318 is named 'user000'. ***
 0| % 
-1| *** User  from 127.0.0.1/31919 is named 'user000'. ***
+1| *** User  from 127.0.0.1/57318 is named 'user000'. ***
 
 login2
-0| *** User '(no name)' entered from 127.0.0.1/32431. ***
-1| *** User '(no name)' entered from 127.0.0.1/32431. ***
+0| *** User '(no name)' entered from 127.0.0.1/57830. ***
+1| *** User '(no name)' entered from 127.0.0.1/57830. ***
 2| ****************************************
 2| ** Welcome to the information server. **
 2| ****************************************
-2| *** User '(no name)' entered from 127.0.0.1/32431. ***
+2| *** User '(no name)' entered from 127.0.0.1/57830. ***
 2| % 
 
 2 % who
 2| <ID>	<nickname>	<IP/port>	<indicate me>
-2| 1	user000	127.0.0.1/31919	
-2| 2	user1	127.0.0.1/32175	
-2| 3	(no name)	127.0.0.1/32431	<- me
+2| 1	user000	127.0.0.1/57318	
+2| 2	user1	127.0.0.1/57574	
+2| 3	(no name)	127.0.0.1/57830	<- me
 2| % 
 
 2 % name user2
-0| *** User  from 127.0.0.1/32431 is named 'user2'. ***
-1| *** User  from 127.0.0.1/32431 is named 'user2'. ***
-2| *** User  from 127.0.0.1/32431 is named 'user2'. ***
+0| *** User  from 127.0.0.1/57830 is named 'user2'. ***
+1| *** User  from 127.0.0.1/57830 is named 'user2'. ***
+2| *** User  from 127.0.0.1/57830 is named 'user2'. ***
 2| % 
 
 2 % who
 2| <ID>	<nickname>	<IP/port>	<indicate me>
-2| 1	user000	127.0.0.1/31919	
-2| 2	user1	127.0.0.1/32175	
-2| 3	user2	127.0.0.1/32431	<- me
+2| 1	user000	127.0.0.1/57318	
+2| 2	user1	127.0.0.1/57574	
+2| 3	user2	127.0.0.1/57830	<- me
 2| % 
 
 2 % name !@#$%
-0| *** User  from 127.0.0.1/32431 is named '!@#$%'. ***
-1| *** User  from 127.0.0.1/32431 is named '!@#$%'. ***
-2| *** User  from 127.0.0.1/32431 is named '!@#$%'. ***
+0| *** User  from 127.0.0.1/57830 is named '!@#$%'. ***
+1| *** User  from 127.0.0.1/57830 is named '!@#$%'. ***
+2| *** User  from 127.0.0.1/57830 is named '!@#$%'. ***
 2| % 
 
 2 % who
 2| <ID>	<nickname>	<IP/port>	<indicate me>
-2| 1	user000	127.0.0.1/31919	
-2| 2	user1	127.0.0.1/32175	
-2| 3	!@#$%	127.0.0.1/32431	<- me
+2| 1	user000	127.0.0.1/57318	
+2| 2	user1	127.0.0.1/57574	
+2| 3	!@#$%	127.0.0.1/57830	<- me
 2| % 
 
 0 % cat test.html
@@ -124,7 +124,8 @@ login2
 1| % 
 
 1 % removetag0 test.html |1
-1| % Error: illegal tag "!test.html"
+1| Error: illegal tag "!test.html"
+1| % 
 
 1 % number | number |2
 1| % 

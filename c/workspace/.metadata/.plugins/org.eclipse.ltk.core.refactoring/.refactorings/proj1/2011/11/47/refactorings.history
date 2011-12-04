@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<session version="1.0">
-<refactoring comment="Rename resource &apos;proj1/src/Array.c&apos; to &apos;Array1.h&apos;" description="Rename resource &apos;Array.c&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="src/Array.c" name="Array1.h" stamp="1321158867726" updateReferences="true"/>
-</session>
