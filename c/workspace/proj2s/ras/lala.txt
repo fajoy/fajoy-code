@@ -1,0 +1,6 @@
+bin
+lala.txt
+ls.txt
+test1.txt
+test2.txt
+test.html
