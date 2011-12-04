@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename resource &apos;helloArray/src/helloarray.c&apos; to &apos;helloArray.c&apos;" description="Rename resource &apos;helloarray.c&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="src/helloarray.c" name="helloArray.c" stamp="1321157681395" updateReferences="true"/>
+</session>
