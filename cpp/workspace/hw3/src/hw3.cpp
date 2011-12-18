@@ -79,6 +79,8 @@ void SerCon::show(void) {
 }
 SerCon sc[5];
 
+
+
 void print_table_row(){
 	int i=0;
 	printf("<tr>");
@@ -169,24 +171,45 @@ void initSc(){
 int main(int argc, char* argv[], char *envp[]) {
 	init_req();
 
- close(0);
- fcntl(1, F_SETFL, O_NONBLOCK);
- //printf("HTTP/1.1 200 OK\n");
+int flag ;
+ flag = fcntl(0, F_GETFL, 0);
+ fcntl(0, F_SETFL, flag|O_NONBLOCK);
 
- printf("Cache-Control: max-age=0\n");
- printf("Content-type: text/html\n\n");
+char tmp[1024];
+read(0,tmp,1024);
+ flag = fcntl(1, F_GETFL, 0);
+ fcntl(1, F_SETFL, flag|O_NONBLOCK);
+// printf("HTTP/1.1 200 OK\n");
+
+
+//printf("Accept-Asynchronous: response\n");
+//printf("Content-length:4096\n");
+// printf("Cache-Control: max-age=0\n");
+ printf("Content-type: text/html\n");
+
+// printf("Content-type: text/plain\n");
+ printf("\n");
  fflush(stdout);
 	initSc();
 	begin_html();
-	for(int i='a';i<'d';i++){
+
 		for(int j=0;j<5;j++){
-			char msg[]="a";
-			msg[0]=i;
-			sc[j].js(j,&msg[0]);
-			fflush(stdout);
-			usleep(100000);
+			   for(int i=0;i<1000;i++){
+				   char tmp[20];
+				   memset(tmp,0,sizeof(tmp));
+				   if(i%10==0)
+					   sprintf(tmp,"%d<br/>",i);
+				   else
+					   sprintf(tmp,"%d",i);
+					sc[j].js(j,&tmp[0]);
+					fflush(stdout);
+					usleep(10000);
+			   }
+
+
+
 		}
-	}
+
 
 	//sc[0].show();
 
