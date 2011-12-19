@@ -1,0 +1,23 @@
+//============================================================================
+// Name        : helloDir.cpp
+// Author      : 
+// Version     :
+// Copyright   : Your copyright notice
+// Description : Hello World in C++, Ansi-style
+//============================================================================
+
+#include <iostream>
+using namespace std;
+#include<libgen.h>
+int main() {
+	char path[255];
+	getcwd(path,sizeof(path));
+	char fullpath[]="oo/file";
+	char *filen=basename(fullpath);
+	char *dirn=dirname(fullpath);
+
+	cout << "cwd=" << path<< endl;
+	cout << "file=" << filen<< endl;
+	cout << "dir=" << dirn<< endl;
+	return 0;
+}
