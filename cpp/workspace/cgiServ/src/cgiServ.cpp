@@ -15,7 +15,7 @@
 #include <dirent.h>
 #include <map>
 #include "Request.h"
-
+#include<libgen.h>
 #include <iostream>
 #include <sstream>
 #include <algorithm>
@@ -90,6 +90,10 @@ void exec_cgi() {
 		signal(SIGTERM, SIG_DFL);
 		signal(SIGQUIT, SIG_DFL);
 		req->setvar();
+		char _path[255];
+		strcpy(_path,filePath.c_str());
+		char *dir_name=dirname(&_path[0]);
+		chdir(dir_name);
 		execl("/bin/sh", "sh", "-c", filePath.c_str(), NULL);
 	}
 	//exec

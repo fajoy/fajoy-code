@@ -46,7 +46,7 @@ void init_req() {
 	if (query == NULL) {
 		char
 				testquery[] =
-						"h1=ubu.fajoy.co.cc&p1=8006&f1=t1.txt&h2=&p2=&f2=&h3=&p3=&f3=&h4=&p4=&f4=&h5=&p5=&f5=";
+						"h1=ubu.fajoy.co.cc&p1=8001&f1=t1.txt&h2=&p2=&f2=&h3=&p3=&f3=&h4=&p4=&f4=&h5=&p5=&f5=";
 		query = testquery;
 	}
 	memset(&req, 0, sizeof(req));
