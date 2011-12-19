@@ -45,7 +45,6 @@ public:
 		Variables["REQUEST_URI"]="";
 		Variables["DOCUMENT_ROOT"]="";
 		Variables["HTTP_HOST"]="";
-		Variables["PATH"]="";
 		Variables["QUERY_STRING"]="";
 		Variables["SERVER_PROTOCOL"]="";
 		Variables["REQUEST_METHOD"]="";
