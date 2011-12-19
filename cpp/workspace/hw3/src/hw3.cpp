@@ -107,7 +107,7 @@ public:
 		int i = str.find(oldstr);
 		while (i != -1) {
 			str.replace(i, oldstr.length(), newstr);
-			i = str.find(oldstr);
+			i = str.find(oldstr,i+newstr.length());
 		}
 		return str;
 	}
