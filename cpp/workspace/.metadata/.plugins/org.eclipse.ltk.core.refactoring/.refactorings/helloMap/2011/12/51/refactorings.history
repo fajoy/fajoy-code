@@ -1,3 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<session version="1.0">&#x0A;<refactoring comment="Rename resource &apos;helloMap/src/Request&apos; to &apos;Request.H&apos;" description="Rename resource &apos;Request&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="src/Request" name="Request.H" stamp="1324125748008" updateReferences="true"/>&#x0A;<refactoring comment="Rename resource &apos;helloMap/src/Request.H&apos; to &apos;Request.h&apos;" description="Rename resource &apos;Request.H&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="src/Request.H" name="Request.h" stamp="1324125756709" updateReferences="true"/>
-</session>
