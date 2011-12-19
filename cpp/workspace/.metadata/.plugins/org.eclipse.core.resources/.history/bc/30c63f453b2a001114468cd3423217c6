@@ -1,0 +1,23 @@
+//============================================================================
+// Name        : helloTime.cpp
+// Author      : 
+// Version     :
+// Copyright   : Your copyright notice
+// Description : Hello World in C++, Ansi-style
+//============================================================================
+
+#include <stdio.h>
+#include <time.h>
+#include <iostream>
+using namespace std;
+
+
+int main() {
+
+ 	 time_t seconds;
+	 seconds = time (NULL);
+	 printf ("%ld hours since January 1, 1970", seconds/3600);
+	//
+	 cout << "!!!Hello World!!!" << endl; // prints !!!Hello World!!!
+	return 0;
+}

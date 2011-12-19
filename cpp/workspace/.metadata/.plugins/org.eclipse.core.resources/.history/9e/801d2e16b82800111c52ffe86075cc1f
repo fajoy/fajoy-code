@@ -1,0 +1,20 @@
+using namespace std;
+#include <map>
+#include <string>
+class Request {
+
+public:
+
+	Request(){
+
+	}
+	map<string, string> QueryString;
+	string URI;
+
+	string& url() {
+		return URI;
+	}
+
+
+
+};

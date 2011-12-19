@@ -1,0 +1,29 @@
+//============================================================================
+// Name        : helloTime.cpp
+// Author      : 
+// Version     :
+// Copyright   : Your copyright notice
+// Description : Hello World in C++, Ansi-style
+//============================================================================
+
+#include <stdio.h>
+#include <time.h>
+#include <iostream>
+using namespace std;
+
+
+int main() {
+
+ 	 time_t t;
+	 t = time(NULL);
+	 while(1){
+
+		 if(t!=time(NULL)){
+			 t=time(NULL);
+			 cout <<t<<endl;
+			 usleep(100000);
+		 }
+	 }
+
+	return 0;
+}

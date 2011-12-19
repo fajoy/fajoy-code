@@ -1,0 +1,23 @@
+using namespace std;
+#include <map>
+#include <string>
+class Request {
+
+public:
+
+	Request(){
+		Variables["SERVER_ADDR"]="";
+		Variables["REMOTE_ADDR"]="";
+		Variables["DOCUMENT_ROOT"]="";
+		Variables["SERVER_ADDR"]="";
+		Variables["SERVER_ADDR"]="";
+	}
+	map<string, string> Variables;
+	string REQUEST_URI;
+	string& REQUEST_URI() {
+		return Variables["REQUEST_URI"];
+	}
+
+
+
+};
