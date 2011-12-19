@@ -1,0 +1,24 @@
+#include <string>
+#include <iostream>
+#include <sstream>
+using namespace std;
+
+int main() {
+	stringstream ss;
+	ss <<"This is a apple.";
+
+	string tmp=ss.str();
+	string oldstr="a";
+	string newstr="two";
+
+	int i=0;
+	if(tmp.find(oldstr)){
+	tmp.replace(i,oldstr.length(),newstr);
+	}
+	cout <<ss.str()<<endl;
+	cout <<tmp<<endl;
+
+
+
+	return 0;
+}

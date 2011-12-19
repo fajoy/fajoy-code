@@ -1,0 +1,16 @@
+#include <string>
+#include <iostream>
+#include <sstream>
+using namespace std;
+
+int main() {
+	std:stringstream ss;
+	ss <<"ss"<<endl;
+
+	stringstream bb;
+	ss <<"bb"<<endl;
+	cout <<ss.str()<<bb.str();
+
+
+	return 0;
+}

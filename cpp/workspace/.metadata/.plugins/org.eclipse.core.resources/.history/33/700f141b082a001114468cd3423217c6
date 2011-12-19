@@ -1,0 +1,15 @@
+#include <string>
+#include <iostream>
+#include <sstream>
+using namespace std;
+
+int main() {
+	stringstream ss();
+	ss <<"test"<<endl;
+	string buf;
+	ss >>buf;
+	cout <<ss.str();
+
+
+	return 0;
+}

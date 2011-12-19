@@ -1,0 +1,19 @@
+#include <string>
+#include <iostream>
+#include <sstream>
+using namespace std;
+
+int main() {
+	stringstream ss;
+	ss <<"This is a apple."<<endl;
+
+	string tmp=ss.str();
+
+	tmp.replace(8,1,"two");
+	cout <<ss.str()<<endl;
+	cout <<tmp<<endl;
+
+
+
+	return 0;
+}
