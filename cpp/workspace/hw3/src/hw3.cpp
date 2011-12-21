@@ -43,12 +43,13 @@ char *query;
 reqdata req;
 void init_req() {
 	query = getenv("QUERY_STRING");
+	/*
 	if (query == NULL) {
 		char
 				testquery[] =
 						"h1=ubu.fajoy.co.cc&p1=8001&f1=t1.txt&h2=&p2=&f2=&h3=&p3=&f3=&h4=&p4=&f4=&h5=&p5=&f5=";
 		query = testquery;
-	}
+	}*/
 	memset(&req, 0, sizeof(req));
 	sscanf(query, "h1=%[^&]&p1=%[^&]&f1=%[^&]&"
 		"h2=%[^&]&p2=%[^&]&f2=%[^&]&"
@@ -74,6 +75,7 @@ public:
 	string send_buf;
 	int mode;
 	timeval send_t;
+	timeval time_out;
 	SerCon() {
 
 	}
@@ -98,7 +100,7 @@ public:
 		recv_buf = "";
 		send_buf = "";
 		gettimeofday(&send_t, NULL);
-		send_t.tv_sec += 2;
+		send_t.tv_sec += 1;
 	}
 	FILE *fp;
 	void parse(char *, char *, char *);
@@ -107,22 +109,45 @@ public:
 		int i = str.find(oldstr);
 		while (i != -1) {
 			str.replace(i, oldstr.length(), newstr);
-			i = str.find(oldstr,i+newstr.length());
+			i = str.find(oldstr, i + newstr.length());
 		}
 		return str;
 	}
 	void js(const char *line) {
+
+
 		string tmp = line;
+		string tmp2 ="";
+
+		while(tmp.length()>200){
+			tmp2=tmp.substr(0,200);
+			tmp2 = str_replace(tmp2, " ", "&nbsp;");
+			tmp2 = str_replace(tmp2, "<", "&lt;");
+			tmp2 = str_replace(tmp2, ">", "&gt;");
+			tmp2 = str_replace(tmp2, "\r", "");
+			tmp2 = str_replace(tmp2, "\n", "<br />");
+			tmp2 = str_replace(tmp2, "\"", "\\\"");
+			printf("<script type='text/javascript'>document.all['m%d'].innerHTML += \"%s\";</script>\n",
+			index, tmp2.c_str());
+			fflush(stdout);
+			tmp.erase(0,200);
+		}
+
+
 		tmp = str_replace(tmp, " ", "&nbsp;");
 		tmp = str_replace(tmp, "<", "&lt;");
 		tmp = str_replace(tmp, ">", "&gt;");
 		tmp = str_replace(tmp, "\r", "");
 		tmp = str_replace(tmp, "\n", "<br />");
 		tmp = str_replace(tmp, "\"", "\\\"");
+
 		printf(
 				"<script type='text/javascript'>document.all['m%d'].innerHTML += \"%s\";</script>\n",
 				index, tmp.c_str());
 		fflush(stdout);
+
+		gettimeofday(&time_out,NULL);
+		time_out.tv_sec+=7;
 	}
 
 	void openfile() {
@@ -136,7 +161,7 @@ public:
 			} else {
 				if (is_con)
 					shutdown(con_fd, SHUT_RDWR);
-					is_con = false;
+				is_con = false;
 				js("script not is exist.\n");
 			}
 		} catch (...) {
@@ -145,12 +170,12 @@ public:
 	}
 	int readfile() {
 		if (is_openfile) {
-			char buf[1024];
+			char buf[4096];
 			bzero(buf, sizeof(buf));
 			if (fgets(buf, sizeof(buf), fp) != NULL) {
 				//int len = strlen(buf);
-				if(is_con)
-				send_buf += buf;
+				if (is_con)
+					send_buf += buf;
 				return 1;
 			} else {
 				is_openfile = false;
@@ -166,20 +191,20 @@ public:
 		if (len > 0) {
 			//cout << write_buf.substr(0, len) << endl;
 			string tmp = send_buf.substr(0, len);
-			if(is_con)
-			js(tmp.c_str());
+			if (is_con)
+				js(tmp.c_str());
 			send_buf.erase(0, len);
 		}
 		return len;
 	}
 	int recvdata() {
-		char buf[1024];
+		char buf[4096];
 		bzero(buf, sizeof(buf));
 		int len = recv(con_fd, buf, sizeof(buf), 0);
 		if (len > 0) {
 			recv_buf += buf;
-		}else{
-			shutdown(con_fd,SHUT_RDWR);
+		} else {
+			shutdown(con_fd, SHUT_RDWR);
 			is_con = false;
 		}
 
@@ -203,7 +228,7 @@ void SerCon::parse(char *shost, char* sport, char *sfilename) {
 
 SerCon sc[5];
 sockaddr_in dest[5];
-map<int, SerCon*> clients;
+//map<int, SerCon*> clients;
 void connect(int i) {
 	try {
 
@@ -221,9 +246,11 @@ void connect(int i) {
 		if (connect(con_fd, (struct sockaddr *) &dest[i], sizeof(dest[i])) == 0) {
 			//cout << "conn "<< i <<sc.host<<sc.port <<sc.filename<<endl;
 			//fflush(stdout);
-			clients[sc[i].con_fd] = &sc[i];
+			//clients[sc[i].con_fd] = &sc[i];
 			sc[i].con_fd = con_fd;
 			sc[i].is_con = true;
+			gettimeofday(&sc[i].time_out,NULL);
+			sc[i].time_out.tv_sec+=7;
 			int flag;
 			flag = fcntl(con_fd, F_GETFL, 0);
 			fcntl(con_fd, F_SETFL, flag | O_NONBLOCK);
@@ -354,33 +381,28 @@ void handerSelect() {
 					//FD_CLR(con_fd,&rfds_src);
 					//FD_SET(con_fd,&wfds_src);
 				}
+
+				timeval tv;
+				gettimeofday(&tv, NULL);
 				if (FD_ISSET(con_fd, &wfds)) {
-					timeval tv;
-					gettimeofday(&tv, NULL);
-					if (tv.tv_sec >= sc[i].send_t.tv_sec) {
-						if (tv.tv_usec > sc[i].send_t.tv_usec) {
+						if (tv.tv_sec >= sc[i].send_t.tv_sec) {
 							sc[i].senddata();
-
 							gettimeofday(&sc[i].send_t, NULL);
-							sc[i].send_t.tv_usec += 5000;
-							if (sc[i].send_t.tv_usec > 10000) {
-								sc[i].send_t.tv_sec += 1;
-								sc[i].send_t.tv_usec %= 10000;
-							}
-
+							sc[i].send_t.tv_sec += 2;
 							if (sc[i].mode < 2)
 								sc[i].mode = 0;
+
+							//FD_CLR(con_fd,&wfds_src);
+							//FD_SET(con_fd,&rfds_src);
+							if (sc[i].send_buf.length() == 0)
+								sc[i].readfile();
 						}
 
-					}
-					//FD_CLR(con_fd,&wfds_src);
-					//FD_SET(con_fd,&rfds_src);
-					if (sc[i].send_buf.length() == 0)
-						sc[i].readfile();
 				}
-
-				if ((sc[i].send_buf.length() == 0 && sc[i].recv_buf.length()
-						== 0)||sc[i].is_con==false) {
+				gettimeofday(&tv, NULL);
+				if ((sc[i].send_buf.length() == 0 && sc[i].recv_buf.length()== 0)
+						|| sc[i].is_con == false
+						||tv.tv_sec>sc[i].time_out.tv_sec) {
 					sc[i].is_con = false;
 					sc[i].mode = 2;
 					FD_CLR(con_fd, &rfds_src);
@@ -392,9 +414,6 @@ void handerSelect() {
 
 		}
 
-		//		cout << "c" << sc[i].is_con << "m" << sc[i].mode << "o"
-		//				<< sc[i].is_openfile << "wl" << sc[i].write_buf.length()
-		//				<< "rl" << sc[i].read_buf.length() << endl;
 	}
 
 }
