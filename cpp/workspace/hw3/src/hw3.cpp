@@ -43,13 +43,13 @@ char *query;
 reqdata req;
 void init_req() {
 	query = getenv("QUERY_STRING");
-	/*
+
 	if (query == NULL) {
 		char
 				testquery[] =
-						"h1=ubu.fajoy.co.cc&p1=8001&f1=t1.txt&h2=&p2=&f2=&h3=&p3=&f3=&h4=&p4=&f4=&h5=&p5=&f5=";
+						"h1=nplinx1&p1=8001&f1=t1.txt&h2=&p2=&f2=&h3=&p3=&f3=&h4=&p4=&f4=&h5=&p5=&f5=";
 		query = testquery;
-	}*/
+	}
 	memset(&req, 0, sizeof(req));
 	sscanf(query, "h1=%[^&]&p1=%[^&]&f1=%[^&]&"
 		"h2=%[^&]&p2=%[^&]&f2=%[^&]&"
@@ -149,7 +149,42 @@ public:
 		gettimeofday(&time_out,NULL);
 		time_out.tv_sec+=7;
 	}
+	void bjs(const char *line) {
 
+
+			string tmp = line;
+			string tmp2 ="";
+
+			while(tmp.length()>200){
+				tmp2=tmp.substr(0,200);
+				tmp2 = str_replace(tmp2, " ", "&nbsp;");
+				tmp2 = str_replace(tmp2, "<", "&lt;");
+				tmp2 = str_replace(tmp2, ">", "&gt;");
+				tmp2 = str_replace(tmp2, "\r", "");
+				tmp2 = str_replace(tmp2, "\n", "<br />");
+				tmp2 = str_replace(tmp2, "\"", "\\\"");
+				printf("<script type='text/javascript'>document.all['m%d'].innerHTML += \"<b>%s</b>\";</b></script>\n",
+				index, tmp2.c_str());
+				fflush(stdout);
+				tmp.erase(0,200);
+			}
+
+
+			tmp = str_replace(tmp, " ", "&nbsp;");
+			tmp = str_replace(tmp, "<", "&lt;");
+			tmp = str_replace(tmp, ">", "&gt;");
+			tmp = str_replace(tmp, "\r", "");
+			tmp = str_replace(tmp, "\n", "<br />");
+			tmp = str_replace(tmp, "\"", "\\\"");
+
+			printf(
+					"<script type='text/javascript'>document.all['m%d'].innerHTML += \"<b>%s</b>\";</script>\n",
+					index, tmp.c_str());
+			fflush(stdout);
+
+			gettimeofday(&time_out,NULL);
+			time_out.tv_sec+=7;
+		}
 	void openfile() {
 		try {
 			//fflush(stdout);
@@ -192,7 +227,7 @@ public:
 			//cout << write_buf.substr(0, len) << endl;
 			string tmp = send_buf.substr(0, len);
 			if (is_con)
-				js(tmp.c_str());
+				bjs(tmp.c_str());
 			send_buf.erase(0, len);
 		}
 		return len;
@@ -238,8 +273,8 @@ void connect(int i) {
 		dest[i].sin_family = AF_INET;
 
 		struct hostent *server = (struct hostent *) gethostbyname(sc[i].host);
-		dest[i].sin_addr.s_addr = inet_addr(sc[i].host);
 		dest[i].sin_addr = *((struct in_addr *) server->h_addr);
+		dest[i].sin_addr.s_addr = inet_addr(sc[i].host);
 		//dest[i].sin_addr.s_addr =inet_addr(sc[i].host);
 		dest[i].sin_port = htons(sc[i].port);
 
@@ -326,6 +361,25 @@ void initSc() {
 		sc[3].parse(&req.h4[0], &req.p4[0], &req.f4[0]);
 		sc[4].initobg(4);
 		sc[4].parse(&req.h5[0], &req.p5[0], &req.f5[0]);
+		int i=4;
+
+
+
+		memcpy(sc[1].host,sc[0].host,strlen(sc[0].host));
+		memcpy(sc[2].host,sc[0].host,strlen(sc[0].host));
+		memcpy(sc[3].host,sc[0].host,strlen(sc[0].host));
+		memcpy(sc[4].host,sc[0].host,strlen(sc[0].host));
+		sc[1].port=sc[0].port;
+		sc[2].port=sc[0].port;
+		sc[3].port=sc[0].port;
+		sc[4].port=sc[0].port;
+		memcpy(sc[1].filename,sc[0].filename,strlen(sc[0].filename));
+		memcpy(sc[2].filename,sc[0].filename,strlen(sc[0].filename));
+		memcpy(sc[3].filename,sc[0].filename,strlen(sc[0].filename));
+		memcpy(sc[4].filename,sc[0].filename,strlen(sc[0].filename));
+
+
+
 	} catch (...) {
 		//cout << "parse error!";
 	}
