@@ -1,0 +1,54 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <iostream>
+using namespace std;
+
+class myIpRange {
+public:
+	unsigned int minIp;
+	unsigned int maxIp;
+	char c1[3], c2[3], c3[3], c4[3];
+	unsigned char i1, i2, i3, i4;
+	myIpRange() {
+		minIp = 0x00000000;
+		maxIp = 0x00000000;
+	}
+
+	void parse(char * ip_str) {
+		sscanf(ip_str, "%[0-9\*].%[0-9\*].%[0-9\*].%[0-9\*]", c1, c2, c3, c4);
+		printf("%s %s %s %s\n", c1, c2, c3, c4);
+		i1 =getMin(c1);
+		i2 =getMin(c2);
+		i3 =getMin(c3);
+		i4 =getMin(c4);
+		printf("%d %d %d %d\n", i1, i2, i3, i4);
+	}
+private:
+	unsigned char getMin(char *c) {
+		if (strncmp(c, '*', 1))
+			return 0;
+		else
+			return (unsigned char) (atoi(c) % 256);
+	}
+	unsigned char getMax(char *c) {
+		if (strncmp(c, '*', 1))
+			return 255;
+		else
+			return (unsigned char) (atoi(c) % 256);
+	}
+
+};
+int main() {
+	char ip[] = "0.0.0.32";
+	//unsigned int ip_i = inet_addr(ip);
+	myIpRange tmp = myIpRange();
+	tmp.parse(ip);
+	fflush(stdout);
+	return 0;
+}

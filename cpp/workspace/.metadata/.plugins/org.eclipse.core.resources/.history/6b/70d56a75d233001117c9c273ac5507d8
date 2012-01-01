@@ -1,0 +1,259 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <fcntl.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+#include <wait.h>
+#include <unistd.h>
+
+#include <iostream>
+#include <map>
+#define debug_fd 1000
+/*
+#ifdef debug_fd
+	dprintf(debug_fd,);
+#endif
+*/
+using namespace std;
+
+class mySocket {
+public:
+
+	sockaddr_in local_addr;
+	sockaddr_in remote_addr;
+	string local_host;
+	string remote_host;
+	int local_port;
+	int remote_port;
+	int listen_fd;
+	int socket_fd;
+	unsigned char recv_buffer[4000];
+	unsigned char send_buffer[4000];
+	//Read N bytes into BUF from socket FD.
+	//Returns the number read or -1 for errors.
+	int recv_len;
+
+	int send_len;
+	bool hasSendData;
+	bool hasRecvData;
+	bool sendError;
+	bool recvError;
+	mySocket() {
+		socket_fd = -1;
+		listen_fd = -1;
+		recv_len = 0;
+		send_len = 0;
+		hasSendData = false;
+		sendError = false;
+
+		hasRecvData = false;
+		recvError = false;
+
+	}
+	void setNonblock() {
+		if (socket_fd > 0) {
+			int flag;
+			flag = fcntl(socket_fd, F_GETFL, 0);
+			fcntl(socket_fd, F_SETFL, flag | O_NONBLOCK);
+		}
+	}
+	int getStat(){
+		if (socket_fd > 0) {
+				int flag;
+				flag = fcntl(socket_fd, F_GETFL, 0);
+				return flag;
+		}
+	}
+
+	void close_listen() {
+		if (listen_fd != -1) {
+			//shutdown(listen_fd,SHUT_WR);
+			close(listen_fd);
+			listen_fd = -1;
+		}
+	}
+	void close_socket() {
+		if (socket_fd != -1) {
+			//shutdown(socket_fd,SHUT_WR);
+			close(socket_fd);
+			socket_fd = -1;
+		}
+	}
+
+	void clear_recv_data() {
+		memset(recv_buffer, 0, sizeof(recv_buffer));
+		recv_len = 0;
+		hasRecvData = false;
+	}
+
+	bool recvData(bool clearRecvBuffer) {
+		if (clearRecvBuffer)
+			clear_recv_data();
+		if (!hasRecvData) {
+			recv_len = -1;
+			if (socket_fd != -1)
+				recv_len = read(socket_fd, recv_buffer, sizeof(recv_buffer));
+			if (recv_len < 0) {
+				recvError = true;
+			} else if (recv_len > 0) {
+				hasRecvData = true;
+			}
+		}
+		return hasRecvData;
+	}
+	bool recvData() {
+		return recvData(true);
+	}
+	void clear_send_data() {
+		memset(send_buffer, 0, sizeof(send_buffer));
+		send_len = 0;
+		hasSendData = false;
+	}
+	void setSendData(unsigned char *data, int size) {
+		clear_send_data();
+		if (size > 0) {
+			send_len = size;
+			memcpy(send_buffer, data, send_len);
+			hasSendData = true;
+		}
+	}
+	void sendData() {
+		if (hasSendData) {
+			int re_send = -1;
+			if (socket_fd != -1)
+				re_send = write(socket_fd, send_buffer, send_len);
+			if (re_send < 0) {
+				sendError = true;
+				clear_send_data();
+			} else if (re_send > 0) {
+				if (re_send != send_len) {
+					cout << re_send << "re!=se" << send_len << endl;
+					fflush(stdout);
+				}
+				clear_send_data();
+			}
+		}
+	}
+
+	void sendData(unsigned char *data, int size) {
+		setSendData(data, size);
+		sendData();
+	}
+
+	//Return 0 on success, -1 for errors.
+	int connect_socket() {
+		socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+		memset(&remote_addr, 0, sizeof(sockaddr_in));
+		remote_addr.sin_family = AF_INET;
+		struct hostent *host = (struct hostent *) gethostbyname(
+				remote_host.c_str());
+		remote_addr.sin_addr = *((struct in_addr *) host->h_addr);
+		remote_addr.sin_port = htons(remote_port);
+		//remote_addr.sin_addr.s_addr =inet_addr(host.c_str());
+
+		return connect(socket_fd, (struct sockaddr *) &remote_addr,
+				sizeof(struct sockaddr_in));
+	}
+	//Returns 0 on success, -1 for errors.
+	int listen_socket() {
+		listen_fd = socket(AF_INET, SOCK_STREAM, 0);
+		memset(&local_addr, 0, sizeof(sockaddr_in)); /* zero the struct before filling the fields */
+		local_addr.sin_family = AF_INET; /* set the type of connection to TCP/IP */
+		local_addr.sin_addr.s_addr = INADDR_ANY; /* set our address to any interface */
+		local_addr.sin_port = htons(local_port); /* set the server port number */
+		bind(listen_fd, (struct sockaddr *) &local_addr,
+				sizeof(struct sockaddr));
+		return listen(listen_fd, 1);
+	}
+	//return accept -1=error
+	int accept_socket() {
+		memset(&remote_addr, 0, sizeof(sockaddr_in));
+		socklen_t len = sizeof(struct sockaddr_in);
+		socket_fd = accept(listen_fd, (struct sockaddr *) &remote_addr, &len);
+		if (socket_fd > 0) {
+			char *addr = inet_ntoa(remote_addr.sin_addr);
+			char tmp[17];
+			memset(tmp, 0, 17);
+			memcpy(tmp, addr, 17);
+			remote_host = tmp;
+			remote_port = ntohs(remote_addr.sin_port);
+		}
+		return socket_fd;
+	}
+
+};
+
+
+mySocket server;
+mySocket client;
+
+void clientAction(){
+	sleep(1);
+	server.close_listen();
+	cout <<"start connect."<<endl;
+	client.remote_host="localhost";
+	client.remote_port=8000;
+	client.connect_socket();
+	cout <<"start send."<<endl;
+	client.sendData("test\n",5);
+	cout <<"send len:"<<client.send_len<<endl;
+	client.close_socket();
+	cout <<"client end."<<endl;
+	exit(EXIT_SUCCESS);
+}
+void serverAction(){
+	cout <<"start accept."<<endl;
+	server.accept_socket();
+	cout <<"start rev."<<endl;
+	server.recvData();
+	cout <<"rev len:"<<server.recv_len<<"\n"<<server.recv_buffer<<endl;
+	fflush(stdout);
+	server.close_socket();
+	server.close_listen();
+	exit(EXIT_SUCCESS);
+
+
+}
+
+int main() {
+#ifdef debug_fd
+	dup2(1,debug_fd);
+#endif
+	/*
+	mySocket *client=new mySocket();
+	client->remote_host="ftp.myweb.hinet.net";
+	client->remote_port=21;
+	cout<<client->connect_socket()<<endl;
+	fflush(stdout);
+	cout <<client->socket_fd<<endl;
+	client->recvdata();
+	cout <<client->recv_buffer<<endl;
+	fflush(stdout);
+	client->recvdata();
+	cout <<client->recv_buffer<<endl;
+	fflush(stdout);
+	client->close();
+	client->~mySocket();
+	//client->close();
+	free(client);
+*/
+	server=mySocket();
+	//server.local_port=8000;
+	server.listen_socket();
+	int pid=0;
+	pid=fork();
+	if(pid==0){
+		clientAction();
+	}else{
+		serverAction();
+	}
+
+	return 0;
+}
