@@ -1,0 +1,147 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <fcntl.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+#include <wait.h>
+#include <unistd.h>
+
+#include <iostream>
+#include <map>
+#define debug_fd 1000
+#ifdef debug_fd
+	extern int debug (int __fd, __const char *__restrict __fmt, ...)
+     __attribute__ ((__format__ (debug_fd, 2, 3)));
+#endif
+using namespace std;
+
+void debug(){
+
+}
+
+class mySocket{
+public:
+
+	string remote_host;
+	sockaddr_in remote_addr;
+	int remote_port;
+	sockaddr_in local_addr;
+	string local_host;
+	int local_port;
+	int socket_fd;
+	char recv_buffer[4000];
+	char send_buffer[4000];
+	mySocket(){
+		socket_fd=-1;
+		cout <<"create"<<endl;
+	}
+
+	void close(){
+		if(socket_fd!=-1)
+			shutdown(socket_fd,SHUT_WR);
+	}
+	char * getRevdata(){
+		return recv_buffer;
+	}
+
+	int recvdata(){
+		memset(recv_buffer,0,sizeof(recv_buffer));
+		return  recv(socket_fd,recv_buffer,sizeof(recv_buffer),0);
+	}
+	int connect_socket(){
+		cout <<"T";
+		fflush(stdout);
+		socket_fd= socket(AF_INET, SOCK_STREAM, 0);
+		cout <<socket_fd;
+		fflush(stdout);
+		memset(&remote_addr,0,sizeof(sockaddr_in));
+		remote_addr.sin_family = AF_INET;
+		cout <<remote_host.c_str();
+		fflush(stdout);
+		struct hostent *host  = (struct hostent *) gethostbyname(remote_host.c_str());
+		cout <<host->h_addr_list[0];
+		fflush(stdout);
+		remote_addr.sin_addr = *((struct in_addr *) host->h_addr);
+		cout <<"T";
+		fflush(stdout);
+		remote_addr.sin_port = htons(remote_port);
+		//dest.sin_addr.s_addr =inet_addr(host.c_str());
+		cout <<"T";
+		fflush(stdout);
+	//int flag;
+	//flag = fcntl(con_fd, F_GETFL, 0);
+	//fcntl(con_fd, F_SETFL, flag | O_NONBLOCK);
+
+		return connect(socket_fd, (struct sockaddr *) &remote_addr,sizeof(struct sockaddr_in));
+	}
+	int listen_socket(){
+		socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+		cout<<socket_fd;
+		fflush(stdout);
+		memset(&local_host, 0, sizeof(sockaddr_in)); /* zero the struct before filling the fields */
+		local_addr.sin_family = AF_INET; /* set the type of connection to TCP/IP */
+		local_addr.sin_addr.s_addr = INADDR_ANY; /* set our address to any interface */
+		local_addr.sin_port = htons(local_port); /* set the server port number */
+		bind(socket_fd, (struct sockaddr *) &local_host, sizeof(struct sockaddr));
+		cout<<socket_fd;
+		fflush(stdout);
+		return listen(socket_fd, 1);
+		}
+	int accept_socket(){
+		memset(&remote_addr,0,sizeof(sockaddr_in));
+		socklen_t len=sizeof(struct sockaddr_in);
+		cout<<socket_fd;
+		fflush(stdout);
+		return accept(socket_fd,(struct sockaddr *)&remote_addr,&len);
+	}
+
+
+};
+
+
+
+
+int main() {
+#ifdef debug_fd
+	dup2(1,debug_fd);
+#endif
+	/*
+	mySocket *client=new mySocket();
+	client->remote_host="ftp.myweb.hinet.net";
+	client->remote_port=21;
+	cout<<client->connect_socket()<<endl;
+	fflush(stdout);
+	cout <<client->socket_fd<<endl;
+	client->recvdata();
+	cout <<client->recv_buffer<<endl;
+	fflush(stdout);
+	client->recvdata();
+	cout <<client->recv_buffer<<endl;
+	fflush(stdout);
+	client->close();
+	client->~mySocket();
+	//client->close();
+	free(client);
+*/
+	debug("testtest%d",1);
+	mySocket *serv=new mySocket();
+	serv->local_port=8000;
+	serv->listen_socket();
+	int fd=serv->accept_socket();
+	char tmp[255];
+	memset(tmp,0,sizeof(tmp));
+	read(fd,tmp,255);
+
+	cout << tmp << endl; // prints !!!Hello World!!!
+	fflush(stdout);
+	serv->close();
+
+	return 0;
+}

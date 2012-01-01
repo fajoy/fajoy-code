@@ -65,13 +65,13 @@ static void whoCmd(int writeFd, int index) {
 	dprintf(writeFd, "<ID>\t<nickname>\t<IP/port>\t<indicate me>\n");
 	for (i = 0; i < ClientQueueLength; i++) {
 		Client *c = &clientQueue[i];
-		char isme[] = "<- me";
+		char isme[] = "<-me";
 		if (c->pid > 0) {
 			if (i == index) {
-				dprintf(writeFd, "%d\t%s\t%s/%d\t%s\r\n", c->index + 1,
+				dprintf(writeFd, "%d\t%s\t%s/%d\t%s\n", c->index + 1,
 						c->name, c->remote_ip, c->remote_port, isme);
 			} else {
-				dprintf(writeFd, "%d\t%s\t%s/%d\t\r\n", c->index + 1, c->name,
+				dprintf(writeFd, "%d\t%s\t%s/%d\t\n", c->index + 1, c->name,
 						c->remote_ip, c->remote_port);
 			}
 		}
@@ -190,13 +190,13 @@ void setCmd(Client *client, Cmd *cmd) {
 					memset(msg, 0, sizeof(msg));
 					sprintf(
 							msg,
-							"*** %s (#%d) just piped '%s' into his/her pipe. ***\r\n",
+							"*** %s (#%d) just piped '%s' into his/her pipe. ***\n",
 							client->name, client->index + 1, cmd_src);
 					clientCastMsg(msg, -1);
 					//write(client->clientSendPipe[1], fifocmd, strlen(fifocmd));
 				} else {
 					dprintf(client->conSocketFd,
-							"*** Error: your pipe already exists. ***\r\n");
+							"*** Error: your pipe already exists. ***\n");
 					cmd->writeFd = getNullFd();
 				}
 
@@ -251,7 +251,7 @@ void setCmd(Client *client, Cmd *cmd) {
 						} else {
 							dprintf(
 									client->conSocketFd,
-									"*** Error: the pipe from #%d does not exist yet. ***\r\n",
+									"*** Error: the pipe from #%d does not exist yet. ***\n",
 									fifoInNumber);
 							cmd->readFd = getNullFd();
 							cmd->writeFd = getNullFd();
@@ -260,7 +260,7 @@ void setCmd(Client *client, Cmd *cmd) {
 					} else {
 						dprintf(
 								client->conSocketFd,
-								"*** Error: the pipe from #%d does not exist yet. ***\r\n",
+								"*** Error: the pipe from #%d does not exist yet. ***\n",
 								fifoInNumber);
 						cmd->readFd = getNullFd();
 						cmd->writeFd = getNullFd();
@@ -271,7 +271,7 @@ void setCmd(Client *client, Cmd *cmd) {
 				else {
 					dprintf(
 							client->conSocketFd,
-							"*** Error: the pipe from #%d does not exist yet. ***\r\n",
+							"*** Error: the pipe from #%d does not exist yet. ***\n",
 							fifoInNumber);
 					cmd->readFd = getNullFd();
 					cmd->writeFd = getNullFd();
@@ -473,7 +473,7 @@ static void closeClient(Client *c) {
 	c->pid = 0;
 	memset(c, 0, sizeof(c));
 	dprintf(stdo_fd, "%s client exit", c->name);
-	sprintf(msg, "*** User '%s' left. ***\r\n", c->name);
+	sprintf(msg, "*** User '%s' left. ***\n", c->name);
 	clientCastMsg(msg, -1);
 }
 int readSocket(Client *c) {
@@ -552,7 +552,7 @@ static void readClientCmd(int clientId, fd_set *rfds_src) {
 		return;
 	}
 	if (strcmp(req, "printenv PATH") == 0) {
-		dprintf(client->conSocketFd, "PATH=%s\r\n", client->PATH);
+		dprintf(client->conSocketFd, "PATH=%s\n", client->PATH);
 		nextQueCmd(client);
 		return;
 	} else if (strncmp(req, "setenv PATH", 11) == 0) {
@@ -575,7 +575,7 @@ static void readClientCmd(int clientId, fd_set *rfds_src) {
 
 	else if (strncmp(req, "name ", 5) == 0) {
 		sprintf(client->name, "%s", &req[5]);
-		sprintf(msg, "*** User  from %s/%d is named '%s'. ***\r\n",
+		sprintf(msg, "*** User from %s/%d is named '%s'. ***\n",
 				client->remote_ip, client->remote_port, client->name);
 		clientCastMsg(msg, -1);
 		dprintf(stdo_fd, "%s", msg);
@@ -585,7 +585,7 @@ static void readClientCmd(int clientId, fd_set *rfds_src) {
 	}
 
 	else if (strncmp(req, "yell ", 5) == 0) {
-		sprintf(msg, "*** %s yelled ***:%s\r\n", client->name, &req[5]);
+		sprintf(msg, "*** %s yelled ***: %s\n", client->name, &req[5]);
 		clientCastMsg(msg, -1);
 		dprintf(stdo_fd, "%s", msg);
 		nextQueCmd(client);
@@ -599,16 +599,16 @@ static void readClientCmd(int clientId, fd_set *rfds_src) {
 			sscanf(req, "tell %d %[^\n]", &i, pmsg);
 			int index = i - 1;
 			if (clientQueue[index].pid > 0) {
-				sprintf(msg, "*** %s told you ***:%s\r\n", client->name, pmsg);
+				sprintf(msg, "*** %s told you ***: %s\n", client->name, pmsg);
 				dprintf(clientQueue[index].conSocketFd, "%s", msg);
 			} else {
 				dprintf(client->conSocketFd,
-						"*** Error: user #%d does not exist yet. ***\r\n", i);
+						"*** Error: user #%d does not exist yet. ***\n", i);
 
 			}
 		} else {
 			dprintf(client->conSocketFd,
-					"*** Error: user #%d does not exist yet. ***\r\n", i);
+					"*** Error: user #%d does not exist yet. ***\n", i);
 
 		}
 
@@ -935,7 +935,7 @@ static int acceptClient(int listenSocketFd) {
 		memset(client->read_buffer, 0, sizeof(client->read_buffer));
 		client->read_buffer_r = client->read_buffer;
 		client->read_buffer_w = client->read_buffer;
-		client->remote_port = dest.sin_port;
+		client->remote_port = ntohs(dest.sin_port);
 		client->fifo_fd[0] = -1;
 		client->fifo_fd[1] = -1;
 		client->erro_fd = -1;
@@ -945,7 +945,7 @@ static int acceptClient(int listenSocketFd) {
 		client->pid = getpid();
 		showMotd(client);
 		char msg[255];
-		sprintf(msg, "*** User '%s' entered from %s/%d. ***\r\n", client->name,
+		sprintf(msg, "*** User '%s' entered from %s/%d. ***\n", client->name,
 				client->remote_ip, client->remote_port);
 		clientCastMsg(msg, -1);
 		return clientIndex;
@@ -1219,7 +1219,7 @@ int main(int argc, char *argv[], char *envp[]) {
 			int index = acceptClient(listenSocketFd);
 			Client *c = &clientQueue[index];
 			char msg[255];
-			sprintf(msg, "*** User '%s' entered from %s/%d. ***\r\n", c->name,
+			sprintf(msg, "*** User '%s' entered from %s/%d. ***\n", c->name,
 					c->remote_ip, c->remote_port);
 			//clientCastMsg(msg, -1);
 			listenClientCmd(c, &main_rfds_src);

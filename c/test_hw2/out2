@@ -1,0 +1,162 @@
+
+login0
+0| ****************************************
+0| ** Welcome to the information server. **
+0| ****************************************
+0| *** User '(no name)' entered from 127.0.0.1/37992. ***
+0| % 
+
+0 % who
+0| <ID>	<nickname>	<IP/port>	<indicate me>
+0| 1	(no name)	127.0.0.1/37992	<- me
+0| % 
+
+login1
+0| *** User '(no name)' entered from 127.0.0.1/37993. ***
+1| ****************************************
+1| ** Welcome to the information server. **
+1| ****************************************
+1| *** User '(no name)' entered from 127.0.0.1/37993. ***
+1| % 
+
+1 % name user1
+0| *** User  from 127.0.0.1/37993 is named 'user1'. ***
+1| *** User  from 127.0.0.1/37993 is named 'user1'. ***
+1| % 
+
+1 % who
+1| <ID>	<nickname>	<IP/port>	<indicate me>
+1| 1	(no name)	127.0.0.1/37992	
+1| 2	user1	127.0.0.1/37993	<- me
+1| % 
+
+0 % name user0
+0| *** User  from 127.0.0.1/37992 is named 'user0'. ***
+0| % 
+1| *** User  from 127.0.0.1/37992 is named 'user0'. ***
+
+0 % name user00
+0| *** User  from 127.0.0.1/37992 is named 'user00'. ***
+0| % 
+1| *** User  from 127.0.0.1/37992 is named 'user00'. ***
+
+0 % name user000
+0| *** User  from 127.0.0.1/37992 is named 'user000'. ***
+0| % 
+1| *** User  from 127.0.0.1/37992 is named 'user000'. ***
+
+login2
+0| *** User '(no name)' entered from 127.0.0.1/37994. ***
+1| *** User '(no name)' entered from 127.0.0.1/37994. ***
+2| ****************************************
+2| ** Welcome to the information server. **
+2| ****************************************
+2| *** User '(no name)' entered from 127.0.0.1/37994. ***
+2| % 
+
+2 % who
+2| <ID>	<nickname>	<IP/port>	<indicate me>
+2| 1	user000	127.0.0.1/37992	
+2| 2	user1	127.0.0.1/37993	
+2| 3	(no name)	127.0.0.1/37994	<- me
+2| % 
+
+2 % name user2
+0| *** User  from 127.0.0.1/37994 is named 'user2'. ***
+1| *** User  from 127.0.0.1/37994 is named 'user2'. ***
+2| *** User  from 127.0.0.1/37994 is named 'user2'. ***
+2| % 
+
+2 % who
+2| <ID>	<nickname>	<IP/port>	<indicate me>
+2| 1	user000	127.0.0.1/37992	
+2| 2	user1	127.0.0.1/37993	
+2| 3	user2	127.0.0.1/37994	<- me
+2| % 
+
+2 % name !@#$%
+0| *** User  from 127.0.0.1/37994 is named '!@#$%'. ***
+1| *** User  from 127.0.0.1/37994 is named '!@#$%'. ***
+2| *** User  from 127.0.0.1/37994 is named '!@#$%'. ***
+2| % 
+
+2 % who
+2| <ID>	<nickname>	<IP/port>	<indicate me>
+2| 1	user000	127.0.0.1/37992	
+2| 2	user1	127.0.0.1/37993	
+2| 3	!@#$%	127.0.0.1/37994	<- me
+2| % 
+
+0 % cat test.html
+0| Unknown command: [cat].
+0| % 
+
+0 % cat test.html | removetag
+0| Unknown command: [cat].
+0| Unknown command: [removetag].
+0| % 
+
+0 % number test.html > test1.txt
+0| Unknown command: [number].
+0| % 
+
+0 % cat test1.txt | number > test2.txt
+0| Unknown command: [cat].
+0| Unknown command: [number].
+0| % 
+
+0 % cat test2.txt
+0| Unknown command: [cat].
+0| % 
+
+1 % removetag test.html |5
+1| % Unknown command: [removetag].
+
+1 % ls | number > ls.txt
+1| Unknown command: [ls].
+1| Unknown command: [number].
+1| % 
+
+1 % removetag0 test.html |1
+1| % Unknown command: [removetag0].
+
+1 % number | number |2
+1| Unknown command: [number].
+1| % Unknown command: [number].
+
+1 % cat ls.txt |1
+1| % Unknown command: [cat].
+
+1 % number
+1| Unknown command: [number].
+1| % 
+
+logout0
+1| *** User 'user000' left. ***
+2| *** User 'user000' left. ***
+
+logout1
+2| *** User 'user1' left. ***
+
+2 % removetag0 test.html !1
+2| % 
+
+2 % number |1
+2| % Unknown command: [number].
+
+2 % cccccccc | ls | cat |1
+2| Unknown command: [cccccccc].
+2| Unknown command: [ls].
+2| % Unknown command: [cat].
+
+2 % number test.html > lala.txt
+2| Unknown command: [number].
+2| % 
+
+2 % cat lala.txt
+2| Unknown command: [cat].
+2| % 
+
+logout2
+
+exit

@@ -3,22 +3,22 @@
 	<section name="org.eclipse.debug.ui.STRING_VARIABLE_SELECTION_DIALOG_SECTION">
 		<item value="548" key="DIALOG_WIDTH"/>
 		<item value="-244" key="DIALOG_Y_ORIGIN"/>
-		<item value="-29" key="DIALOG_X_ORIGIN"/>
 		<item value="727" key="DIALOG_HEIGHT"/>
+		<item value="-29" key="DIALOG_X_ORIGIN"/>
 		<item value="1|Sans|10.0|0|GTK|1|" key="DIALOG_FONT_NAME"/>
 	</section>
 	<section name="org.eclipse.debug.ui.SELECT_LAUNCHERS_DIALOG">
-		<item value="500" key="DIALOG_WIDTH"/>
-		<item value="329" key="DIALOG_Y_ORIGIN"/>
-		<item value="500" key="DIALOG_HEIGHT"/>
-		<item value="753" key="DIALOG_X_ORIGIN"/>
+		<item value="510" key="DIALOG_WIDTH"/>
+		<item value="354" key="DIALOG_Y_ORIGIN"/>
+		<item value="756" key="DIALOG_X_ORIGIN"/>
+		<item value="510" key="DIALOG_HEIGHT"/>
 		<item value="1|Sans|10.0|0|GTK|1|" key="DIALOG_FONT_NAME"/>
 	</section>
 	<section name="org.eclipse.debug.ui.LAUNCH_CONFIGURATION_PROPERTIES_DIALOG_SECTION">
 		<item value="716" key="DIALOG_WIDTH"/>
 		<item value="-49" key="DIALOG_Y_ORIGIN"/>
-		<item value="88" key="DIALOG_X_ORIGIN"/>
 		<item value="658" key="DIALOG_HEIGHT"/>
+		<item value="88" key="DIALOG_X_ORIGIN"/>
 		<item value="1|Sans|10.0|0|GTK|1|" key="DIALOG_FONT_NAME"/>
 	</section>
 </section>

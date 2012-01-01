@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Copy 1 elements(s) to &apos;helloIpPasre&apos;&#x0A;- Original project: &apos;helloIpPasre&apos;&#x0A;- Destination element: &apos;helloIpPasre&apos;&#x0A;- Original element: &apos;socks.conf&apos;" description="Copy file" element1="Debug/socks.conf" files="1" flags="589830" folders="0" id="org.eclipse.jdt.ui.copy" policy="org.eclipse.jdt.ui.copyResources" stamp="1325400801479" target="/helloIpPasre" units="0" version="1.0"/>
+</session>

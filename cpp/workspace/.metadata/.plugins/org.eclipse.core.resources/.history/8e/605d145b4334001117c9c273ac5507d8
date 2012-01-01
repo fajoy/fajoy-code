@@ -1,0 +1,68 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <iostream>
+using namespace std;
+
+class myIpRange {
+public:
+	unsigned int minIp;
+	unsigned int maxIp;
+	char c1[3], c2[3], c3[3], c4[3];
+	unsigned char i1, i2, i3, i4;
+	myIpRange() {
+		minIp = 0x00000000;
+		maxIp = 0x00000000;
+	}
+
+	void parse(char * ip_str) {
+		sscanf(ip_str, "%[0-9\*].%[0-9\*].%[0-9\*].%[0-9\*]", c1, c2, c3, c4);
+		printf("%s %s %s %s\n", c1, c2, c3, c4);
+		minIp = 0x00000000;
+		maxIp = 0x00000000;
+		i1 =getMin(c1);
+		i2 =getMin(c2);
+		i3 =getMin(c3);
+		i4 =getMin(c4);
+		minIp|=i1<<24;
+		minIp|=i2<<16;
+		minIp|=i3<<8;
+		minIp|=i4;
+		i1 =getMax(c1);
+		i2 =getMax(c2);
+		i3 =getMax(c3);
+		i4 =getMax(c4);
+		maxIp|=i1<<24;
+		maxIp|=i2<<16;
+		maxIp|=i3<<8;
+		maxIp|=i4;
+		printf("minIp=%d maxIp=%d\n",minIp,maxIp);
+	}
+private:
+	unsigned char getMin(char *c) {
+		if (c[0]=='*')
+			return 0;
+		else
+			return (unsigned char) (atoi(c) % 256);
+	}
+	unsigned char getMax(char *c) {
+		if (c[0]=='*')
+			return 255;
+		else
+			return (unsigned char) (atoi(c) % 256);
+	}
+
+};
+int main() {
+	char ip[] = "0.0.0.*";
+	//unsigned int ip_i = inet_addr(ip);
+	myIpRange tmp = myIpRange();
+	tmp.parse(ip);
+	fflush(stdout);
+	return 0;
+}
