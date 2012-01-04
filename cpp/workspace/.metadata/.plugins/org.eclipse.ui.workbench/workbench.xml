@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <workbench progressCount="24" version="2.0">
 <workbenchAdvisor/>
-<window height="1028" width="1930" x="0" y="22">
+<window height="999" width="1916" x="8" y="52">
 <fastViewData fastViewLocation="1024"/>
 <perspectiveBar>
 <itemSize x="160"/>
@@ -31,23 +31,19 @@
 <info part="DefaultEditorWorkbook">
 <folder appearance="1" expanded="2">
 <presentation id="org.eclipse.ui.presentations.WorkbenchPresentationFactory">
+<part id="4"/>
 <part id="0"/>
-<part id="5"/>
 <part id="1"/>
 <part id="2"/>
 <part id="3"/>
-<part id="4"/>
+<part id="5"/>
 </presentation>
 </folder>
 </info>
 </editorArea>
-<editor activePart="true" focus="true" id="org.eclipse.cdt.ui.editor.CEditor" name="hw4.cpp" partName="hw4.cpp" path="/home/fajoy/fajoy-code/cpp/workspace/hw4/src/hw4.cpp" title="hw4.cpp" tooltip="hw4/src/hw4.cpp" workbook="DefaultEditorWorkbook">
-<input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/hw4/src/hw4.cpp"/>
-<editorState selectionHorizontalPixel="0" selectionLength="0" selectionOffset="5" selectionTopPixel="0"/>
-</editor>
 <editor id="org.eclipse.cdt.ui.editor.CEditor" name="helloIpPasre.cpp" partName="helloIpPasre.cpp" path="/home/fajoy/fajoy-code/cpp/workspace/helloIpPasre/src/helloIpPasre.cpp" title="helloIpPasre.cpp" tooltip="helloIpPasre/src/helloIpPasre.cpp" workbook="DefaultEditorWorkbook">
 <input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/helloIpPasre/src/helloIpPasre.cpp"/>
-<editorState selectionHorizontalPixel="0" selectionLength="0" selectionOffset="343" selectionTopPixel="497"/>
+<editorState selectionHorizontalPixel="0" selectionLength="0" selectionOffset="1027" selectionTopPixel="497"/>
 </editor>
 <editor id="org.eclipse.ui.DefaultTextEditor" name="socks.conf" partName="socks.conf" path="/home/fajoy/fajoy-code/cpp/workspace/hw4/socks.conf" title="socks.conf" tooltip="hw4/socks.conf" workbook="DefaultEditorWorkbook">
 <input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/hw4/socks.conf"/>
@@ -64,6 +60,10 @@
 <editor id="org.eclipse.cdt.ui.editor.CEditor" name="helloConnect.cpp" partName="helloConnect.cpp" path="/home/fajoy/fajoy-code/cpp/workspace/helloConnect/src/helloConnect.cpp" title="helloConnect.cpp" tooltip="helloConnect/src/helloConnect.cpp" workbook="DefaultEditorWorkbook">
 <input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/helloConnect/src/helloConnect.cpp"/>
 <editorState selectionHorizontalPixel="0" selectionLength="0" selectionOffset="9284" selectionTopPixel="5162"/>
+</editor>
+<editor activePart="true" focus="true" id="org.eclipse.cdt.ui.editor.CEditor" name="hw4.cpp" partName="hw4.cpp" path="/home/fajoy/fajoy-code/cpp/workspace/hw4/src/hw4.cpp" title="hw4.cpp" tooltip="hw4/src/hw4.cpp" workbook="DefaultEditorWorkbook">
+<input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/hw4/src/hw4.cpp"/>
+<editorState selectionHorizontalPixel="0" selectionLength="0" selectionOffset="9523" selectionTopPixel="7717"/>
 </editor>
 </editors>
 <views>
@@ -99,8 +99,7 @@
 </view>
 <view id="org.eclipse.ui.views.ProblemView" partName="Problems">
 <viewState PRIMARY_SORT_FIELD="org.eclipse.ui.ide.severityAndDescriptionField" categoryGroup="org.eclipse.ui.ide.severity" markerContentGenerator="org.eclipse.ui.ide.problemsGenerator" partName="Problems">
-<expanded>
-<category IMemento.internal.id="Warnings"/>
+<expanded>&#x0A;<category IMemento.internal.id="Warnings"/>
 <category IMemento.internal.id="Errors"/>
 </expanded>
 <columnWidths org.eclipse.ui.ide.locationField="0" org.eclipse.ui.ide.markerType="0" org.eclipse.ui.ide.pathField="0" org.eclipse.ui.ide.resourceField="0" org.eclipse.ui.ide.severityAndDescriptionField="0"/>
@@ -448,16 +447,9 @@
 <editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" path="/helloConnect/src/helloConnect.cpp"/>
 <editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" path="/helloClient/src/helloClient.cpp"/>
 <editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" path="/cgiServ/src/cgiServ.cpp"/>
+<editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" path="/helloIpPasre/src/helloIpPasre.cpp"/>
+<editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" path="/hw4/src/hw4.cpp"/>
 </editors>
-<item historyLabel="hw4.cpp" index="0">
-<position info="not_deleted" x="8276" y="6"/>
-</item>
-<item historyLabel="hw4.cpp" index="0">
-<position info="not_deleted" x="8346" y="8"/>
-</item>
-<item historyLabel="hw4.cpp" index="0">
-<position info="not_deleted" x="3199" y="0"/>
-</item>
 <item historyLabel="helloClient.cpp" index="2">
 <position info="not_deleted" x="0" y="0"/>
 </item>
@@ -596,8 +588,17 @@
 <item historyLabel="helloConnect.cpp" index="1">
 <position info="not_deleted" x="9284" y="0"/>
 </item>
-<item active="true" historyLabel="hw4.cpp" index="0">
-<position info="not_deleted" x="9795" y="0"/>
+<item historyLabel="hw4.cpp" index="0">
+<position info="not_deleted" x="5" y="0"/>
+</item>
+<item historyLabel="helloIpPasre.cpp" index="4">
+<position info="not_deleted" x="1027" y="0"/>
+</item>
+<item historyLabel="hw4.cpp" index="5">
+<position info="not_deleted" x="0" y="0"/>
+</item>
+<item active="true" historyLabel="hw4.cpp" index="5">
+<position info="not_deleted" x="20054" y="0"/>
 </item>
 </navigationHistory>
 <input factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/" type="8"/>
@@ -616,6 +617,9 @@
 </trimLayout>
 </window>
 <mruList>
+<file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" name="hw4.cpp" tooltip="hw4/src/hw4.cpp">
+<persistable path="/hw4/src/hw4.cpp"/>
+</file>
 <file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" name="helloConnect.cpp" tooltip="helloConnect/src/helloConnect.cpp">
 <persistable path="/helloConnect/src/helloConnect.cpp"/>
 </file>
@@ -657,9 +661,6 @@
 </file>
 <file factoryID="org.eclipse.cdt.ui.ExternalEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" name="socket.h" tooltip="/usr/include/sys/socket.h">
 <persistable path="/usr/include/sys/socket.h" project="hw4"/>
-</file>
-<file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" name="helloClient.cpp" tooltip="helloClient2/src/helloClient.cpp">
-<persistable path="/helloClient2/src/helloClient.cpp"/>
 </file>
 </mruList>
 </workbench>
