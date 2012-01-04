@@ -834,9 +834,9 @@ int main() {
 	}
 	while (1) {
 		handlerAccept();
-		bindport++;
-		if(bindport>8005)
-			bindport=8003;
+		//bindport++;
+		//if(bindport>8005)
+			//bindport=8003;
 	}
 	listen_socket.close_listen();
 
