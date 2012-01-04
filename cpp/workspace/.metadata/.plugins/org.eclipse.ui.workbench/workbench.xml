@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <workbench progressCount="24" version="2.0">
 <workbenchAdvisor/>
-<window height="990" width="1926" x="87" y="89">
+<window height="1028" width="1930" x="0" y="22">
 <fastViewData fastViewLocation="1024"/>
 <perspectiveBar>
 <itemSize x="160"/>
@@ -32,15 +32,18 @@
 <folder appearance="1" expanded="2">
 <presentation id="org.eclipse.ui.presentations.WorkbenchPresentationFactory">
 <part id="0"/>
+<part id="5"/>
 <part id="1"/>
 <part id="2"/>
+<part id="3"/>
+<part id="4"/>
 </presentation>
 </folder>
 </info>
 </editorArea>
 <editor activePart="true" focus="true" id="org.eclipse.cdt.ui.editor.CEditor" name="hw4.cpp" partName="hw4.cpp" path="/home/fajoy/fajoy-code/cpp/workspace/hw4/src/hw4.cpp" title="hw4.cpp" tooltip="hw4/src/hw4.cpp" workbook="DefaultEditorWorkbook">
 <input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/hw4/src/hw4.cpp"/>
-<editorState selectionHorizontalPixel="0" selectionLength="0" selectionOffset="6828" selectionTopPixel="5450"/>
+<editorState selectionHorizontalPixel="0" selectionLength="0" selectionOffset="5" selectionTopPixel="0"/>
 </editor>
 <editor id="org.eclipse.cdt.ui.editor.CEditor" name="helloIpPasre.cpp" partName="helloIpPasre.cpp" path="/home/fajoy/fajoy-code/cpp/workspace/helloIpPasre/src/helloIpPasre.cpp" title="helloIpPasre.cpp" tooltip="helloIpPasre/src/helloIpPasre.cpp" workbook="DefaultEditorWorkbook">
 <input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/helloIpPasre/src/helloIpPasre.cpp"/>
@@ -49,6 +52,18 @@
 <editor id="org.eclipse.ui.DefaultTextEditor" name="socks.conf" partName="socks.conf" path="/home/fajoy/fajoy-code/cpp/workspace/hw4/socks.conf" title="socks.conf" tooltip="hw4/socks.conf" workbook="DefaultEditorWorkbook">
 <input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/hw4/socks.conf"/>
 <editorState selectionHorizontalPixel="0" selectionLength="0" selectionOffset="54" selectionTopPixel="0"/>
+</editor>
+<editor id="org.eclipse.cdt.ui.editor.CEditor" name="helloGetHostByName.cpp" partName="helloGetHostByName.cpp" path="/home/fajoy/fajoy-code/cpp/workspace/helloGetHostByName/src/helloGetHostByName.cpp" title="helloGetHostByName.cpp" tooltip="helloGetHostByName/src/helloGetHostByName.cpp" workbook="DefaultEditorWorkbook">
+<input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/helloGetHostByName/src/helloGetHostByName.cpp"/>
+<editorState selectionHorizontalPixel="0" selectionLength="0" selectionOffset="810" selectionTopPixel="219"/>
+</editor>
+<editor id="org.eclipse.cdt.ui.editor.CEditor" name="cgiServ.cpp" partName="cgiServ.cpp" path="/home/fajoy/fajoy-code/cpp/workspace/cgiServ/src/cgiServ.cpp" title="cgiServ.cpp" tooltip="cgiServ/src/cgiServ.cpp" workbook="DefaultEditorWorkbook">
+<input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/cgiServ/src/cgiServ.cpp"/>
+<editorState selectionHorizontalPixel="0" selectionLength="22" selectionOffset="79" selectionTopPixel="1258"/>
+</editor>
+<editor id="org.eclipse.cdt.ui.editor.CEditor" name="helloConnect.cpp" partName="helloConnect.cpp" path="/home/fajoy/fajoy-code/cpp/workspace/helloConnect/src/helloConnect.cpp" title="helloConnect.cpp" tooltip="helloConnect/src/helloConnect.cpp" workbook="DefaultEditorWorkbook">
+<input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/helloConnect/src/helloConnect.cpp"/>
+<editorState selectionHorizontalPixel="0" selectionLength="0" selectionOffset="9284" selectionTopPixel="5162"/>
 </editor>
 </editors>
 <views>
@@ -100,7 +115,7 @@
 <viewState/>
 </view>
 </views>
-<perspectives activePart="org.eclipse.ui.navigator.ProjectExplorer" activePerspective="org.eclipse.cdt.ui.CPerspective">
+<perspectives activePart="org.eclipse.cdt.ui.editor.CEditor" activePerspective="org.eclipse.cdt.ui.CPerspective">
 <perspective editorAreaTrimState="1" editorAreaVisible="1" fixed="0" version="0.016">
 <descriptor class="org.eclipse.jdt.internal.ui.JavaPerspectiveFactory" id="org.eclipse.jdt.ui.JavaPerspective" label="Java"/>
 <alwaysOnActionSet id="org.eclipse.ui.cheatsheets.actionSet"/>
@@ -305,7 +320,7 @@
 </presentation>
 </folder>
 </info>
-<info folder="true" part="topRight" ratio="0.74546516" ratioLeft="1274" ratioRight="435" relationship="2" relative="org.eclipse.ui.editorss">
+<info folder="true" part="topRight" ratio="0.59056604" ratioLeft="626" ratioRight="434" relationship="2" relative="org.eclipse.ui.editorss">
 <folder activePageID="org.eclipse.ui.views.ContentOutline" appearance="2" expanded="2">
 <page content="org.eclipse.ui.views.ContentOutline" label="Outline"/>
 <page content="org.eclipse.cdt.make.ui.views.MakeView" label="Make Targets"/>
@@ -430,159 +445,159 @@
 <navigationHistory>
 <editors>
 <editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" path="/hw4/src/hw4.cpp"/>
-<editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" path="/helloIpPasre/src/helloIpPasre.cpp"/>
-<editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.ui.DefaultTextEditor" path="/hw4/socks.conf"/>
-<editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.ui.DefaultTextEditor" path="/hw4/socks.conf"/>
-<editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" path="/hw3/src/hw3.cpp"/>
-<editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" path="/hw3socks/src/hw3.cpp"/>
-<editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.ui.DefaultTextEditor" path="/hw3socks/hw4.html"/>
+<editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" path="/helloConnect/src/helloConnect.cpp"/>
+<editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" path="/helloClient/src/helloClient.cpp"/>
+<editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" path="/cgiServ/src/cgiServ.cpp"/>
 </editors>
-<item historyLabel="helloIpPasre.cpp" index="1">
-<position info="not_deleted" x="1267" y="22"/>
+<item historyLabel="hw4.cpp" index="0">
+<position info="not_deleted" x="8276" y="6"/>
 </item>
 <item historyLabel="hw4.cpp" index="0">
-<position info="not_deleted" x="14824" y="0"/>
-</item>
-<item historyLabel="helloIpPasre.cpp" index="1">
-<position info="not_deleted" x="1598" y="132"/>
+<position info="not_deleted" x="8346" y="8"/>
 </item>
 <item historyLabel="hw4.cpp" index="0">
-<position info="not_deleted" x="14824" y="0"/>
+<position info="not_deleted" x="3199" y="0"/>
 </item>
-<item historyLabel="helloIpPasre.cpp" index="1">
-<position info="not_deleted" x="1598" y="132"/>
+<item historyLabel="helloClient.cpp" index="2">
+<position info="not_deleted" x="0" y="0"/>
 </item>
-<item historyLabel="hw4.cpp" index="0">
-<position info="not_deleted" x="14824" y="0"/>
-</item>
-<item historyLabel="hw4.cpp" index="0">
-<position info="not_deleted" x="6519" y="0"/>
+<item historyLabel="cgiServ.cpp" index="3">
+<position info="not_deleted" x="79" y="22"/>
 </item>
 <item historyLabel="hw4.cpp" index="0">
-<position info="not_deleted" x="6786" y="0"/>
+<position info="not_deleted" x="3199" y="0"/>
 </item>
 <item historyLabel="hw4.cpp" index="0">
-<position info="not_deleted" x="14826" y="0"/>
+<position info="not_deleted" x="8346" y="8"/>
 </item>
-<item historyLabel="socks.conf" index="2">
+<item historyLabel="hw4.cpp" index="0">
+<position info="not_deleted" x="4906" y="8"/>
+</item>
+<item historyLabel="hw4.cpp" index="0">
+<position info="not_deleted" x="4928" y="8"/>
+</item>
+<item historyLabel="hw4.cpp" index="0">
+<position info="not_deleted" x="4596" y="277"/>
+</item>
+<item historyLabel="helloClient.cpp" index="2">
+<position info="not_deleted" x="0" y="0"/>
+</item>
+<item historyLabel="hw4.cpp" index="0">
+<position info="not_deleted" x="4596" y="277"/>
+</item>
+<item historyLabel="helloConnect.cpp" index="1">
 <position/>
 </item>
 <item historyLabel="hw4.cpp" index="0">
-<position info="not_deleted" x="14724" y="0"/>
+<position info="not_deleted" x="2934" y="4968"/>
 </item>
-<item historyLabel="helloIpPasre.cpp" index="1">
-<position info="not_deleted" x="1598" y="132"/>
+<item historyLabel="helloConnect.cpp" index="1">
+<position info="not_deleted" x="3103" y="0"/>
 </item>
 <item historyLabel="hw4.cpp" index="0">
-<position info="not_deleted" x="14724" y="0"/>
+<position info="not_deleted" x="4769" y="0"/>
 </item>
-<item historyLabel="socks.conf" index="3">
+<item historyLabel="helloConnect.cpp" index="1">
 <position/>
 </item>
 <item historyLabel="hw4.cpp" index="0">
-<position info="not_deleted" x="14724" y="0"/>
+<position info="not_deleted" x="4769" y="0"/>
 </item>
 <item historyLabel="hw4.cpp" index="0">
-<position info="not_deleted" x="6763" y="5"/>
+<position info="not_deleted" x="11087" y="0"/>
 </item>
 <item historyLabel="hw4.cpp" index="0">
-<position info="not_deleted" x="2018" y="5"/>
+<position info="not_deleted" x="10489" y="11"/>
 </item>
 <item historyLabel="hw4.cpp" index="0">
-<position info="not_deleted" x="6607" y="0"/>
-</item>
-<item historyLabel="socks.conf" index="3">
-<position info="not_deleted" x="0" y="0"/>
+<position info="not_deleted" x="10894" y="11"/>
 </item>
 <item historyLabel="hw4.cpp" index="0">
-<position info="not_deleted" x="6819" y="0"/>
-</item>
-<item historyLabel="socks.conf" index="3">
-<position info="not_deleted" x="0" y="0"/>
-</item>
-<item historyLabel="hw4.cpp" index="0">
-<position info="not_deleted" x="6819" y="0"/>
-</item>
-<item historyLabel="socks.conf" index="3">
-<position info="not_deleted" x="46" y="0"/>
-</item>
-<item historyLabel="hw4.cpp" index="0">
-<position info="not_deleted" x="14336" y="0"/>
-</item>
-<item historyLabel="helloIpPasre.cpp" index="1">
-<position info="not_deleted" x="0" y="0"/>
-</item>
-<item historyLabel="helloIpPasre.cpp" index="1">
-<position info="not_deleted" x="1217" y="0"/>
-</item>
-<item historyLabel="helloIpPasre.cpp" index="1">
-<position info="not_deleted" x="211" y="1093"/>
-</item>
-<item historyLabel="hw4.cpp" index="0">
-<position info="not_deleted" x="2000" y="0"/>
-</item>
-<item historyLabel="socks.conf" index="3">
-<position info="not_deleted" x="46" y="0"/>
-</item>
-<item historyLabel="hw4.cpp" index="0">
-<position info="not_deleted" x="2000" y="0"/>
-</item>
-<item historyLabel="helloIpPasre.cpp" index="1">
-<position info="not_deleted" x="211" y="1093"/>
-</item>
-<item historyLabel="socks.conf" index="3">
-<position info="not_deleted" x="46" y="0"/>
-</item>
-<item historyLabel="hw4.cpp" index="0">
-<position info="not_deleted" x="1805" y="0"/>
-</item>
-<item historyLabel="socks.conf" index="3">
-<position info="not_deleted" x="42" y="0"/>
-</item>
-<item historyLabel="hw4.cpp" index="0">
-<position info="not_deleted" x="6828" y="0"/>
-</item>
-<item historyLabel="hw3.cpp" index="4">
-<position info="not_deleted" x="0" y="0"/>
-</item>
-<item historyLabel="hw3.cpp" index="5">
-<position info="not_deleted" x="0" y="0"/>
-</item>
-<item historyLabel="helloIpPasre.cpp" index="1">
-<position info="not_deleted" x="343" y="0"/>
-</item>
-<item historyLabel="hw3.cpp" index="5">
-<position info="not_deleted" x="0" y="0"/>
-</item>
-<item historyLabel="helloIpPasre.cpp" index="1">
-<position info="not_deleted" x="343" y="0"/>
-</item>
-<item historyLabel="socks.conf" index="3">
-<position info="not_deleted" x="42" y="0"/>
-</item>
-<item historyLabel="helloIpPasre.cpp" index="1">
-<position info="not_deleted" x="343" y="0"/>
-</item>
-<item historyLabel="socks.conf" index="3">
-<position info="not_deleted" x="54" y="0"/>
-</item>
-<item historyLabel="hw4.cpp" index="0">
-<position info="not_deleted" x="6828" y="0"/>
-</item>
-<item historyLabel="hw4.cpp" index="0">
-<position info="not_deleted" x="6828" y="0"/>
-</item>
-<item historyLabel="hw4.html" index="6">
 <position/>
 </item>
 <item historyLabel="hw4.cpp" index="0">
-<position info="not_deleted" x="6828" y="0"/>
+<position info="not_deleted" x="10024" y="7"/>
 </item>
-<item historyLabel="hw4.html" index="6">
-<position info="not_deleted" x="0" y="0"/>
+<item historyLabel="hw4.cpp" index="0">
+<position info="not_deleted" x="18271" y="7"/>
+</item>
+<item historyLabel="hw4.cpp" index="0">
+<position info="not_deleted" x="18384" y="8"/>
+</item>
+<item historyLabel="hw4.cpp" index="0">
+<position info="not_deleted" x="6031" y="8"/>
+</item>
+<item historyLabel="hw4.cpp" index="0">
+<position info="not_deleted" x="6075" y="11"/>
+</item>
+<item historyLabel="hw4.cpp" index="0">
+<position info="not_deleted" x="5089" y="11"/>
+</item>
+<item historyLabel="hw4.cpp" index="0">
+<position info="not_deleted" x="11163" y="8"/>
+</item>
+<item historyLabel="hw4.cpp" index="0">
+<position info="not_deleted" x="5346" y="8"/>
+</item>
+<item historyLabel="hw4.cpp" index="0">
+<position info="not_deleted" x="12652" y="0"/>
+</item>
+<item historyLabel="hw4.cpp" index="0">
+<position info="not_deleted" x="12673" y="0"/>
+</item>
+<item historyLabel="hw4.cpp" index="0">
+<position info="not_deleted" x="11496" y="8"/>
+</item>
+<item historyLabel="hw4.cpp" index="0">
+<position info="not_deleted" x="5346" y="8"/>
+</item>
+<item historyLabel="helloConnect.cpp" index="1">
+<position/>
+</item>
+<item historyLabel="hw4.cpp" index="0">
+<position info="not_deleted" x="2934" y="4968"/>
+</item>
+<item historyLabel="helloConnect.cpp" index="1">
+<position info="not_deleted" x="7610" y="0"/>
+</item>
+<item historyLabel="hw4.cpp" index="0">
+<position info="not_deleted" x="3102" y="0"/>
+</item>
+<item historyLabel="helloConnect.cpp" index="1">
+<position info="not_deleted" x="7610" y="0"/>
+</item>
+<item historyLabel="hw4.cpp" index="0">
+<position info="not_deleted" x="3102" y="0"/>
+</item>
+<item historyLabel="helloConnect.cpp" index="1">
+<position info="not_deleted" x="7610" y="0"/>
+</item>
+<item historyLabel="hw4.cpp" index="0">
+<position info="not_deleted" x="3102" y="0"/>
+</item>
+<item historyLabel="hw4.cpp" index="0">
+<position info="not_deleted" x="11229" y="0"/>
+</item>
+<item historyLabel="hw4.cpp" index="0">
+<position info="not_deleted" x="9099" y="10"/>
+</item>
+<item historyLabel="hw4.cpp" index="0">
+<position info="not_deleted" x="9135" y="10"/>
+</item>
+<item historyLabel="hw4.cpp" index="0">
+<position info="not_deleted" x="9517" y="7"/>
+</item>
+<item historyLabel="hw4.cpp" index="0">
+<position info="not_deleted" x="18271" y="7"/>
+</item>
+<item historyLabel="hw4.cpp" index="0">
+<position info="not_deleted" x="9654" y="0"/>
+</item>
+<item historyLabel="helloConnect.cpp" index="1">
+<position info="not_deleted" x="9284" y="0"/>
 </item>
 <item active="true" historyLabel="hw4.cpp" index="0">
-<position info="not_deleted" x="6828" y="0"/>
+<position info="not_deleted" x="9795" y="0"/>
 </item>
 </navigationHistory>
 <input factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/" type="8"/>
@@ -601,6 +616,24 @@
 </trimLayout>
 </window>
 <mruList>
+<file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" name="helloConnect.cpp" tooltip="helloConnect/src/helloConnect.cpp">
+<persistable path="/helloConnect/src/helloConnect.cpp"/>
+</file>
+<file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" name="helloClient.cpp" tooltip="helloClient/src/helloClient.cpp">
+<persistable path="/helloClient/src/helloClient.cpp"/>
+</file>
+<file factoryID="org.eclipse.cdt.ui.ExternalEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" name="in.h" tooltip="/usr/include/netinet/in.h">
+<persistable path="/usr/include/netinet/in.h" project="helloGetHostByName"/>
+</file>
+<file factoryID="org.eclipse.cdt.ui.ExternalEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" name="inet.h" tooltip="/usr/include/arpa/inet.h">
+<persistable path="/usr/include/arpa/inet.h" project="cgiServ"/>
+</file>
+<file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" name="cgiServ.cpp" tooltip="cgiServ/src/cgiServ.cpp">
+<persistable path="/cgiServ/src/cgiServ.cpp"/>
+</file>
+<file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" name="helloGetHostByName.cpp" tooltip="helloGetHostByName/src/helloGetHostByName.cpp">
+<persistable path="/helloGetHostByName/src/helloGetHostByName.cpp"/>
+</file>
 <file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.ui.DefaultTextEditor" name="hw4.html" tooltip="hw3socks/hw4.html">
 <persistable path="/hw3socks/hw4.html"/>
 </file>
@@ -625,20 +658,8 @@
 <file factoryID="org.eclipse.cdt.ui.ExternalEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" name="socket.h" tooltip="/usr/include/sys/socket.h">
 <persistable path="/usr/include/sys/socket.h" project="hw4"/>
 </file>
-<file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" name="helloConnect.cpp" tooltip="helloConnect/src/helloConnect.cpp">
-<persistable path="/helloConnect/src/helloConnect.cpp"/>
-</file>
 <file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" name="helloClient.cpp" tooltip="helloClient2/src/helloClient.cpp">
 <persistable path="/helloClient2/src/helloClient.cpp"/>
-</file>
-<file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" name="helloClient.cpp" tooltip="helloClient/src/helloClient.cpp">
-<persistable path="/helloClient/src/helloClient.cpp"/>
-</file>
-<file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" name="cgiServ.cpp" tooltip="cgiServ/src/cgiServ.cpp">
-<persistable path="/cgiServ/src/cgiServ.cpp"/>
-</file>
-<file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.cdt.ui.editor.CEditor" name="hw4.cpp" tooltip="hw4/src/hw4.cpp">
-<persistable path="/hw4/src/hw4.cpp"/>
 </file>
 </mruList>
 </workbench>

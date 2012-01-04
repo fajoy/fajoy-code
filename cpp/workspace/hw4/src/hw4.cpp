@@ -3,16 +3,19 @@
 #include <string.h>
 #include <unistd.h>
 #include <arpa/inet.h>
-#include <sys/types.h>
+
 #include <netinet/in.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <fcntl.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <wait.h>
+#include <signal.h>
 #include <unistd.h>
 #include <sys/time.h>
+
 #include <iostream>
 #include <map>
 #define debug_fd 1000
@@ -67,53 +70,96 @@ public:
 	}
 
 	void parseRange(char * ip_str) {
-		memset(&c1[0],0,sizeof(c1));
-		memset(&c2[0],0,sizeof(c2));
-		memset(&c3[0],0,sizeof(c3));
-		memset(&c4[0],0,sizeof(c4));
-		sscanf(ip_str, "%3[0-9\*].%3[0-9\*].%3[0-9\*].%3[0-9\*]", c1, c2, c3, c4);
+		memset(&c1[0], 0, sizeof(c1));
+		memset(&c2[0], 0, sizeof(c2));
+		memset(&c3[0], 0, sizeof(c3));
+		memset(&c4[0], 0, sizeof(c4));
+		sscanf(ip_str, "%3[0-9\\*].%3[0-9\\*].%3[0-9\\*].%3[0-9\\*]", c1, c2,
+				c3, c4);
 		minIp = 0x00000000;
 		maxIp = 0x00000000;
-		i1 =getMin(c1);
-		i2 =getMin(c2);
-		i3 =getMin(c3);
-		i4 =getMin(c4);
-		minIp|=i1<<24;
-		minIp|=i2<<16;
-		minIp|=i3<<8;
-		minIp|=i4;
-		i1 =getMax(c1);
-		i2 =getMax(c2);
-		i3 =getMax(c3);
-		i4 =getMax(c4);
-		maxIp|=i1<<24;
-		maxIp|=i2<<16;
-		maxIp|=i3<<8;
-		maxIp|=i4;
+		i1 = getMin(c1);
+		i2 = getMin(c2);
+		i3 = getMin(c3);
+		i4 = getMin(c4);
+		minIp |= i1 << 24;
+		minIp |= i2 << 16;
+		minIp |= i3 << 8;
+		minIp |= i4;
+		i1 = getMax(c1);
+		i2 = getMax(c2);
+		i3 = getMax(c3);
+		i4 = getMax(c4);
+		maxIp |= i1 << 24;
+		maxIp |= i2 << 16;
+		maxIp |= i3 << 8;
+		maxIp |= i4;
 	}
-	bool isConatins(int ip){
-		return minIp<=ip&&maxIp>=ip;
+	bool isConatins(int ip) {
+		return minIp <= ip && maxIp >= ip;
 	}
 private:
 	unsigned char getMin(char *c) {
-		char cc=c[0];
-		if (cc=='*'){
+		char cc = c[0];
+		if (cc == '*') {
 			return 0;
-		}
-		else{
+		} else {
 			return (unsigned char) (atoi(c) & 0xff);
 		}
 	}
 	unsigned char getMax(char *c) {
-		char cc=c[0];
-		if (cc=='*')
+		char cc = c[0];
+		if (cc == '*')
 			return 255;
 		else
-			return (unsigned char) (atoi(c) &0xff);
+			return (unsigned char) (atoi(c) & 0xff);
 	}
 
 };
 static myIpRange rules[100];
+
+class mySelectHelper {
+public:
+	fd_set rfds;
+	fd_set wfds;
+	fd_set rfds_src;
+	fd_set wfds_src;
+	mySelectHelper() {
+		memset(&rfds, 0, sizeof(fd_set));
+		memset(&rfds_src, 0, sizeof(fd_set));
+		memset(&wfds, 0, sizeof(fd_set));
+		memset(&wfds_src, 0, sizeof(fd_set));
+	}
+	void reset() {
+		memcpy(&rfds, &rfds_src, sizeof(fd_set));
+		memcpy(&wfds, &wfds_src, sizeof(fd_set));
+	}
+	int select_fd(int nfds) {
+		reset();
+		return select(nfds, &rfds, &wfds, (fd_set *) 0, (timeval*) 0);
+	}
+
+	int isRSet(int fd) {
+		return FD_ISSET(fd,&rfds);
+	}
+	int isWSet(int fd) {
+		return FD_ISSET(fd,&wfds);
+	}
+	int setR(int fd) {
+		return FD_SET(fd,&rfds_src);
+	}
+	int setW(int fd) {
+		return FD_SET(fd,&wfds_src);
+	}
+	int clrR(int fd) {
+		return FD_CLR(fd,&rfds_src);
+	}
+	int clrW(int fd) {
+		return FD_CLR(fd,&wfds_src);
+	}
+
+};
+
 class mySocket {
 public:
 
@@ -125,8 +171,11 @@ public:
 	int remote_port;
 	int listen_fd;
 	int socket_fd;
-	unsigned char recv_buffer[4096];
-	unsigned char send_buffer[4096];
+	int status;
+	unsigned char recv_buffer[1024];
+	unsigned char send_buffer[1024];
+	unsigned char *sendp;
+	unsigned char buffer[1024];
 	//Read N bytes into BUF from socket FD.
 	//Returns the number read or -1 for errors.
 	int recv_len;
@@ -141,11 +190,20 @@ public:
 		listen_fd = -1;
 		recv_len = 0;
 		send_len = 0;
-		hasSendData = false;
-		sendError = false;
-
-		hasRecvData = false;
-		recvError = false;
+		status = -1;
+		clear_send_data();
+		clear_recv_data();
+	}
+	bool isConnectError() {
+		int error = 0;
+		int len = 0;
+		int opt = getsockopt(socket_fd, SOL_SOCKET, SO_ERROR, (void *) &error,
+				(socklen_t*) &len);
+		if (opt < 0 || error != 0) {
+			// non-blocking connect failed
+			return true;
+		}
+		return false;
 
 	}
 	void setNonblock() {
@@ -185,23 +243,25 @@ public:
 		recvError = false;
 
 	}
-	void paasiveTcp1(){
+	void paasiveTcp1() {
 		//int fd=paasiveTcp
 
 	}
 	bool recvData(bool clearRecvBuffer) {
 		if (clearRecvBuffer)
 			clear_recv_data();
-		if (!hasRecvData) {
-			recv_len = -1;
-			if (socket_fd != -1)
-				recv_len = read(socket_fd, recv_buffer, sizeof(recv_buffer));
-			if (recv_len < 0) {
+
+		int re = 0;
+		if (socket_fd != -1){
+				re = read(socket_fd, &recv_buffer[recv_len], sizeof(recv_buffer)-recv_len);
+			if (re < 0) {
 				recvError = true;
-			} else if (recv_len > 0) {
+			} else if (re > 0) {
+				recv_len+=re;
 				hasRecvData = true;
 			}
 		}
+
 		return hasRecvData;
 	}
 	bool recvData() {
@@ -214,10 +274,15 @@ public:
 		sendError = false;
 	}
 	void setSendData(unsigned char *data, int size) {
-		clear_send_data();
+		if (status < 0) {
+			clear_send_data();
+			return;
+		}
 		if (size > 0) {
-			send_len = size;
-			memcpy(send_buffer, data, send_len);
+			memcpy(&send_buffer[send_len], data, size);
+			send_len += size;
+			if(status==0)
+				status = 1;
 			hasSendData = true;
 		}
 	}
@@ -225,16 +290,25 @@ public:
 		if (hasSendData) {
 			int re_send = -1;
 			if (socket_fd != -1)
-				re_send = write(socket_fd, send_buffer, send_len);
+				re_send = write(socket_fd, &send_buffer[0], send_len);
 			if (re_send < 0) {
 				sendError = true;
-				clear_send_data();
+				//clear_send_data();
 			} else if (re_send > 0) {
 				if (re_send != send_len) {
-					cout << re_send << "re!=se" << send_len << endl;
-					fflush(stdout);
+					sendp = &send_buffer[re_send];
+					memset(buffer, 0, sizeof(send_buffer));
+					memcpy(buffer, sendp, send_len - re_send);
+					memset(send_buffer, 0, sizeof(send_buffer));
+					memcpy(send_buffer, buffer, send_len - re_send);
+					send_len -= re_send;
+					//cout << re_send << "re!=se" << send_len << endl;
+					//fflush(stdout);
+
+				} else {
+					clear_send_data();
+					setMode(0);
 				}
-				clear_send_data();
 			}
 		}
 	}
@@ -244,9 +318,15 @@ public:
 		sendData();
 	}
 
+	int creatSocket() {
+		socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+		return socket_fd;
+	}
 	//Return 0 on success, -1 for errors.
 	int connect_socket() {
-		socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+		if (socket_fd == -1)
+			creatSocket();
+		status = -2;
 		memset(&remote_addr, 0, sizeof(sockaddr_in));
 		remote_addr.sin_family = AF_INET;
 		struct hostent *host = (struct hostent *) gethostbyname(
@@ -254,9 +334,11 @@ public:
 		remote_addr.sin_addr = *((struct in_addr *) host->h_addr);
 		remote_addr.sin_port = htons(remote_port);
 		//remote_addr.sin_addr.s_addr =inet_addr(host.c_str());
-
-		return connect(socket_fd, (struct sockaddr *) &remote_addr,
+		int re = connect(socket_fd, (struct sockaddr *) &remote_addr,
 				sizeof(struct sockaddr_in));
+		if (re == 0)
+			status = 0;
+		return re;
 	}
 	//Returns 0 on success, -1 for errors.
 	int listen_socket() {
@@ -281,13 +363,24 @@ public:
 			memcpy(tmp, addr, 17);
 			remote_host = tmp;
 			remote_port = ntohs(remote_addr.sin_port);
+			status=0;
 		}
 		return socket_fd;
+	}
+	void setMode(int s) {
+		status = s;
+	}
+	int getMode() {
+		return status;
 	}
 
 };
 class Socks {
 public:
+	SocksData req;
+	mySocket client;
+	mySocket proxy;
+	mySelectHelper fds;
 	Socks() {
 		client = mySocket();
 		proxy = mySocket();
@@ -296,28 +389,36 @@ public:
 	Socks(const mySocket *socks) {
 		client = mySocket();
 		proxy = mySocket();
+		fds = mySelectHelper();
 		memcpy(&client, socks, sizeof(mySocket));
 		memset(&req, 0, sizeof(req));
 	}
 	void getReq() {
-		while (!client.hasRecvData) {
-			client.recvData();
-			if (client.recvError)
+		//printf("start getReq\n");
+		//fflush(stdout);
+		client.recvData();
+		//debug();
+		if (client.recvError)
 				return;
-		}
+
 		memcpy(&req, &client.recv_buffer[0], client.recv_len);
-		debug();
+
+		printf("VN=%d,CD=%d ", req.VN, req.CD);
+				printf("DST ip=%d.%d.%d.%d,DSTPORT=%d ", req.ip[0], req.ip[1],
+						req.ip[2], req.ip[3], (req.port[0] << 8) + req.port[1]);
+				printf("USERID: %s\n", req.userid);
+				fflush(stdout);
 		client.clear_recv_data();
-		unsigned int ip=0x00000000;
-		ip|=(0|req.ip[0])<<24;
-		ip|=(0|req.ip[1])<<16;
-		ip|=(0|req.ip[2])<<8;
-		ip|=(0|req.ip[3]);
-		int i=0;
-		bool isReject=true;
-		for (i=0;i<100;i++){
-			if(rules[i].isConatins(ip)){
-				isReject=false;
+		unsigned int ip = 0x00000000;
+		ip |= (0 | req.ip[0]) << 24;
+		ip |= (0 | req.ip[1]) << 16;
+		ip |= (0 | req.ip[2]) << 8;
+		ip |= (0 | req.ip[3]);
+		int i = 0;
+		bool isReject = true;
+		for (i = 0; i < 100; i++) {
+			if (rules[i].isConatins(ip)) {
+				isReject = false;
 				break;
 			}
 		}
@@ -330,17 +431,28 @@ public:
 
 	}
 	void proxy_bind(bool isReject) {
-		proxy.local_port = (req.port[0] << 8) + req.port[1];
-		if (isReject||proxy.listen_socket()) {
+		//proxy.local_port = (req.port[0] << 8) + req.port[1];
+		proxy.local_port = 8003;
+		req.port[0]=proxy.local_port/256;
+		req.port[1]=proxy.local_port%256;
+		req.ip[0]=140;
+		req.ip[1]=113;
+		req.ip[2]=63;
+		req.ip[3]=51;
+		if (isReject || proxy.listen_socket()) {
 			reject();
 			printf("SOCKS_BIND REJECTED ....\n");
 			fflush(stdout);
-		} else {
-
+		}
+		else {
 			granted();
 			printf("SOCKS_BIND GRANTED ....\n");
+			//printf("start accept ....\n");
 			fflush(stdout);
 			proxy.accept_socket();
+			granted();
+			printf("Ftp Server(%s:%d) Accept ....\n",proxy.remote_host.c_str(),proxy.remote_port);
+			fflush(stdout);
 			proxy.setNonblock();
 			client.setNonblock();
 			begin_proxy();
@@ -356,7 +468,7 @@ public:
 				client.remote_host.c_str(), client.remote_port,
 				proxy.remote_host.c_str(), proxy.remote_port);
 		fflush(stdout);
-		if (isReject||proxy.connect_socket()) {
+		if (isReject || proxy.connect_socket()) {
 			reject();
 			printf("SOCKS_CONNECT REJECTED ....\n");
 			fflush(stdout);
@@ -371,198 +483,269 @@ public:
 
 	}
 	void debug() {
-		/*
+
 		 unsigned char *c=client.recv_buffer;
 		 int i=0;
 		 for(i=0;i<client.recv_len;i++){
 		 printf("%d:%2X(%u)\n",i,*c,*c);
 		 c++;
 		 }
-		 */
-		printf("VN=%d,CD=%d ", req.VN, req.CD);
-		printf("DST ip=%d.%d.%d.%d,DSTPORT=%d ", req.ip[0], req.ip[1],
-				req.ip[2], req.ip[3], (req.port[0] << 8) + req.port[1]);
-		printf("USERID: %s\n", req.userid);
-		fflush(stdout);
+		 fflush(stdout);
+
 		//printf("revclen=%d VN=%d CD=%d\n",client.recv_len,req.VN,req.CD);
 		//printf("proxy ip=%d.%d.%d.%d:%d\n",req.ip[0],req.ip[1],req.ip[2],req.ip[3],(req.port[0]<<8)+req.port[1]);
 		//fflush(stdout);
 
 	}
-
 	void begin_proxy() {
+		int con = 2;
+		fds.setR(proxy.socket_fd);
+		fds.setR(client.socket_fd);
+		//fds.setW(proxy.socket_fd);
+		//fds.setW(client.socket_fd);
+		while (con) {
+			fds.select_fd(1023);
 
-		fd_set rfds_src;
-		fd_set rfds;
-		//
-		//		fd_set wfds_src;
-		//		fd_set wfds;
-		//		fd_set efds_src;
-		//		fd_set efds;
-		FD_SET(proxy.socket_fd,&rfds_src);
-		FD_SET(client.socket_fd,&rfds_src);
-		//		FD_SET(proxy.socket_fd,&wfds_src);
-		//		FD_SET(client.socket_fd,&wfds_src);
-		//		FD_SET(proxy.socket_fd,&efds_src);
-		//		FD_SET(client.socket_fd,&efds_src);
-		//printf("pfd=%d,%d cfd=%d,%d\n", proxy.sendError , proxy.recvError,client.sendError,client.recvError);
-		//fflush(stdout);
-		timeval timeout;
-		timeval now;
-		gettimeofday(&now, NULL);
-		gettimeofday(&timeout, NULL);
-		int timeout_len = 30;
-		timeout.tv_sec += timeout_len;
-		//while (proxy.hasSendData ||client.hasSendData||!(proxy.recvError &&client.recvError)) {
+			if (fds.isWSet(client.socket_fd) && client.getMode() == 1) {
+				client.sendData();
+				if (client.hasSendData) {
+					if(client.sendError){
+						fds.clrW(client.socket_fd);
+						client.setMode(0);
+					}
+				} else {
+					fds.clrW(client.socket_fd);
+					client.setMode(0);
+					if(proxy.getMode()==-1)
+							break;
+				}
 
-		timeval s_timeout;
-		s_timeout.tv_usec = 0;
-		s_timeout.tv_sec = 1;
+			}else if (fds.isWSet(proxy.socket_fd) && proxy.getMode() == 1) {
+				proxy.sendData();
+				if (proxy.hasSendData) {
+					if(proxy.sendError){
+						fds.clrW(proxy.socket_fd);
+						proxy.setMode(0);
+					}
+				} else {
+					fds.clrW(proxy.socket_fd);
+					proxy.setMode(0);
+					if(client.getMode()==-1)
+								break;
+				}
 
-		do {
-
-			//while (proxy.hasSendData ||client.hasSendData||proxy.hasRecvData||client.hasRecvData||
-			//	!(proxy.sendError &&client.sendError&&proxy.recvError &&client.recvError)){
-			//printf("pfd=%d,%d cfd=%d,%d\n", proxy.hasSendData,
-			//		proxy.hasRecvData, client.hasSendData, client.hasRecvData);
-			//printf("pfe=%d,%d cfe=%d,%d\n", proxy.sendError, proxy.recvError,
-			//		client.sendError, client.recvError);
-			fflush(stdout);
-			memcpy(&rfds, &rfds_src, sizeof(fd_set));
-			//memcpy(&wfds,&wfds_src,sizeof(fd_set));
-			//memcpy(&efds,&efds_src,sizeof(fd_set));
-			//select(10,&rfds,&wfds,&efds,0);
-			select(10, &rfds, 0, 0, &s_timeout);
-
-			//printf("pfd e=%d cfd e=%d \n",FD_ISSET(proxy.socket_fd,&efds) , FD_ISSET(client.socket_fd,&efds) );
-			//fflush(stdout);
-
-
-			if (!proxy.hasSendData) {
+			}  else if (fds.isRSet(client.socket_fd) && client.getMode() == 0&&proxy.send_len==0) {
 				client.recvData();
-				//printf("a1");
-				//fflush(stdout);
 				if (client.hasRecvData) {
 					proxy.setSendData(client.recv_buffer, client.recv_len);
-					//proxy.sendData();
-					//printf("a2");
-					//fflush(stdout);
-				} else if (client.recvError) {
-					shutdown(client.socket_fd, SHUT_RD);
+					proxy.setMode(1);
+					client.clear_recv_data();
+					fds.setW(proxy.socket_fd);
+				} else {
+					con--;
+					fds.clrR(client.socket_fd);
+					client.setMode(-1);
+					if(proxy.getMode()==0)
+						break;
 				}
-			}
-			proxy.sendData();
-			if (proxy.sendError) {
-				shutdown(proxy.socket_fd, SHUT_WR);
-			}
-
-			//}else if(FD_ISSET(proxy.socket_fd,&rfds)){
-
-			if (!client.hasSendData) {
+			}else if (fds.isRSet(proxy.socket_fd) && proxy.getMode() == 0&&client.send_len==0) {
 				proxy.recvData();
 				if (proxy.hasRecvData) {
 					client.setSendData(proxy.recv_buffer, proxy.recv_len);
-				} else if (proxy.recvError) {
-					shutdown(proxy.socket_fd, SHUT_RD);
-				}
-			}
-
-			client.sendData();
-			if (client.sendError) {
-				shutdown(client.socket_fd, SHUT_WR);
-			}
-
-			/*
-			 if (FD_ISSET(client.socket_fd,&rfds)) {
-			 client.recvData();
-			 printf("c=%d\n",client.socket_fd);
-			 fflush(stdout);
-			 if(client.hasRecvData){
-			 proxy.sendData(client.recv_buffer, client.recv_len);
-			 }else if(client.recvError){
-			 FD_CLR(proxy.socket_fd,&rfds_src);
-			 }
-			 }
-			 fflush(stdout);
-			 if (FD_ISSET(proxy.socket_fd,&rfds)) {
-			 printf("p=%d\n",proxy.socket_fd);
-			 fflush(stdout);
-			 proxy.recvData();
-			 if(proxy.hasRecvData){
-			 client.sendData(proxy.recv_buffer, proxy.recv_len);
-			 }else if(proxy.recvError){
-			 FD_CLR(proxy.socket_fd,&rfds_src);
-			 }
-			 }
-			 fflush(stdout);
-			 */
-			//}
-			/*
-			 if (FD_ISSET(client.socket_fd,&rfds)) {
-			 if (proxy.hasSendData) {
-			 if (FD_ISSET(proxy.socket_fd,&wfds))
-			 proxy.sendData();
-			 } else {
-			 client.recvData();
-			 if (client.hasRecvData) {
-			 printf("cr=%d ", client.recv_len);
-			 fflush(stdout);
-			 proxy.setSendData(client.recv_buffer, client.recv_len);
-			 if (FD_ISSET(proxy.socket_fd,&wfds)) {
-			 proxy.sendData();
-			 if ()
-			 FD_CLR(proxy.socket_fd,&rfds_src);
-			 }
-			 }
-			 }
-			 }
-
-			 if (FD_ISSET(proxy.socket_fd,&rfds)) {
-			 if (proxy.hasSendData) {
-			 if (FD_ISSET(client.socket_fd,&wfds))
-			 client.sendData();
-			 } else {
-			 proxy.recvData();
-			 if (proxy.hasRecvData) {
-			 printf("pr=%d ", proxy.recv_len);
-			 fflush(stdout);
-			 client.setSendData(proxy.recv_buffer, proxy.recv_len);
-			 if (FD_ISSET(client.socket_fd,&wfds))
-			 client.sendData();
-			 }
-			 }
-			 } else {
-			 FD_SET(proxy.socket_fd,&rfds_src);
-			 }
-			 */
-			if (client.hasRecvData || proxy.hasRecvData) {
-				gettimeofday(&timeout, NULL);
-				timeout.tv_sec += timeout_len;
-				usleep(1000);
-			} else {
-				if (timeout.tv_sec - now.tv_sec < timeout_len - 2){
-					if((proxy.recvError && client.recvError)){
+					client.setMode(1);
+					proxy.clear_recv_data();
+					fds.setW(client.socket_fd);
+				} else {
+					con--;
+					proxy.setMode(-1);
+					fds.clrR(proxy.socket_fd);
+					if(client.getMode()==0)
 						break;
-					}else{
-						sleep(1);
-					}
-				}
-				else{
-					usleep(1000);
 				}
 			}
-			gettimeofday(&now, NULL);
 
-			//} while (FD_ISSET(client.socket_fd,&rfds_src)|| FD_ISSET(proxy.socket_fd,&rfds_src));
-		} while ((!proxy.sendError || !client.sendError) && timeout.tv_sec
-				> now.tv_sec);
-		//printf("pfd=%d,%d cfd=%d,%d\n", proxy.sendError , proxy.recvError,client.sendError,client.recvError);
-		//fflush(stdout);
-		//sleep(10);
-		client.close_socket();
-		proxy.close_socket();
+//			cout <<"con:"<<con<<" proxy:"<<proxy.getMode()
+//					<<"s"<<proxy.send_len<<"r"<<proxy.recv_len<<" client:"<<client.getMode()
+//					<<"s"<<client.send_len<<"r"<<client.recv_len<<endl;
+			fflush(stdout);
+		}
 
 	}
+	//	void begin_proxy() {
+	//
+	//		fd_set rfds_src;
+	//		fd_set rfds;
+	//		//
+	//		//		fd_set wfds_src;
+	//		//		fd_set wfds;
+	//		//		fd_set efds_src;
+	//		//		fd_set efds;
+	//		FD_SET(proxy.socket_fd,&rfds_src);
+	//		FD_SET(client.socket_fd,&rfds_src);
+	//		//		FD_SET(proxy.socket_fd,&wfds_src);
+	//		//		FD_SET(client.socket_fd,&wfds_src);
+	//		//		FD_SET(proxy.socket_fd,&efds_src);
+	//		//		FD_SET(client.socket_fd,&efds_src);
+	//		//printf("pfd=%d,%d cfd=%d,%d\n", proxy.sendError , proxy.recvError,client.sendError,client.recvError);
+	//		//fflush(stdout);
+	//		timeval timeout;
+	//		timeval now;
+	//		gettimeofday(&now, NULL);
+	//		gettimeofday(&timeout, NULL);
+	//		int timeout_len = 30;
+	//		timeout.tv_sec += timeout_len;
+	//		//while (proxy.hasSendData ||client.hasSendData||!(proxy.recvError &&client.recvError)) {
+	//
+	//		timeval s_timeout;
+	//		s_timeout.tv_usec = 0;
+	//		s_timeout.tv_sec = 1;
+	//
+	//		do {
+	//
+	//			//while (proxy.hasSendData ||client.hasSendData||proxy.hasRecvData||client.hasRecvData||
+	//			//	!(proxy.sendError &&client.sendError&&proxy.recvError &&client.recvError)){
+	//			//printf("pfd=%d,%d cfd=%d,%d\n", proxy.hasSendData,
+	//			//		proxy.hasRecvData, client.hasSendData, client.hasRecvData);
+	//			//printf("pfe=%d,%d cfe=%d,%d\n", proxy.sendError, proxy.recvError,
+	//			//		client.sendError, client.recvError);
+	//			fflush(stdout);
+	//			memcpy(&rfds, &rfds_src, sizeof(fd_set));
+	//			//memcpy(&wfds,&wfds_src,sizeof(fd_set));
+	//			//memcpy(&efds,&efds_src,sizeof(fd_set));
+	//			//select(10,&rfds,&wfds,&efds,0);
+	//			select(10, &rfds, 0, 0, &s_timeout);
+	//
+	//			//printf("pfd e=%d cfd e=%d \n",FD_ISSET(proxy.socket_fd,&efds) , FD_ISSET(client.socket_fd,&efds) );
+	//			//fflush(stdout);
+	//
+	//
+	//			if (!proxy.hasSendData) {
+	//				client.recvData();
+	//				//printf("a1");
+	//				//fflush(stdout);
+	//				if (client.hasRecvData) {
+	//					proxy.setSendData(client.recv_buffer, client.recv_len);
+	//					//proxy.sendData();
+	//					//printf("a2");
+	//					//fflush(stdout);
+	//				} else if (client.recvError) {
+	//					shutdown(client.socket_fd, SHUT_RD);
+	//				}
+	//			}
+	//			proxy.sendData();
+	//			if (proxy.sendError) {
+	//				shutdown(proxy.socket_fd, SHUT_WR);
+	//			}
+	//
+	//			//}else if(FD_ISSET(proxy.socket_fd,&rfds)){
+	//
+	//			if (!client.hasSendData) {
+	//				proxy.recvData();
+	//				if (proxy.hasRecvData) {
+	//					client.setSendData(proxy.recv_buffer, proxy.recv_len);
+	//				} else if (proxy.recvError) {
+	//					shutdown(proxy.socket_fd, SHUT_RD);
+	//				}
+	//			}
+	//
+	//			client.sendData();
+	//			if (client.sendError) {
+	//				shutdown(client.socket_fd, SHUT_WR);
+	//			}
+	//
+	//			/*
+	//			 if (FD_ISSET(client.socket_fd,&rfds)) {
+	//			 client.recvData();
+	//			 printf("c=%d\n",client.socket_fd);
+	//			 fflush(stdout);
+	//			 if(client.hasRecvData){
+	//			 proxy.sendData(client.recv_buffer, client.recv_len);
+	//			 }else if(client.recvError){
+	//			 FD_CLR(proxy.socket_fd,&rfds_src);
+	//			 }
+	//			 }
+	//			 fflush(stdout);
+	//			 if (FD_ISSET(proxy.socket_fd,&rfds)) {
+	//			 printf("p=%d\n",proxy.socket_fd);
+	//			 fflush(stdout);
+	//			 proxy.recvData();
+	//			 if(proxy.hasRecvData){
+	//			 client.sendData(proxy.recv_buffer, proxy.recv_len);
+	//			 }else if(proxy.recvError){
+	//			 FD_CLR(proxy.socket_fd,&rfds_src);
+	//			 }
+	//			 }
+	//			 fflush(stdout);
+	//			 */
+	//			//}
+	//			/*
+	//			 if (FD_ISSET(client.socket_fd,&rfds)) {
+	//			 if (proxy.hasSendData) {
+	//			 if (FD_ISSET(proxy.socket_fd,&wfds))
+	//			 proxy.sendData();
+	//			 } else {
+	//			 client.recvData();
+	//			 if (client.hasRecvData) {
+	//			 printf("cr=%d ", client.recv_len);
+	//			 fflush(stdout);
+	//			 proxy.setSendData(client.recv_buffer, client.recv_len);
+	//			 if (FD_ISSET(proxy.socket_fd,&wfds)) {
+	//			 proxy.sendData();
+	//			 if ()
+	//			 FD_CLR(proxy.socket_fd,&rfds_src);
+	//			 }
+	//			 }
+	//			 }
+	//			 }
+	//
+	//			 if (FD_ISSET(proxy.socket_fd,&rfds)) {
+	//			 if (proxy.hasSendData) {
+	//			 if (FD_ISSET(client.socket_fd,&wfds))
+	//			 client.sendData();
+	//			 } else {
+	//			 proxy.recvData();
+	//			 if (proxy.hasRecvData) {
+	//			 printf("pr=%d ", proxy.recv_len);
+	//			 fflush(stdout);
+	//			 client.setSendData(proxy.recv_buffer, proxy.recv_len);
+	//			 if (FD_ISSET(client.socket_fd,&wfds))
+	//			 client.sendData();
+	//			 }
+	//			 }
+	//			 } else {
+	//			 FD_SET(proxy.socket_fd,&rfds_src);
+	//			 }
+	//			 */
+	//			if (client.hasRecvData || proxy.hasRecvData) {
+	//				gettimeofday(&timeout, NULL);
+	//				timeout.tv_sec += timeout_len;
+	//				usleep(1000);
+	//			} else {
+	//				if (timeout.tv_sec - now.tv_sec < timeout_len - 2) {
+	//					if ((proxy.recvError && client.recvError)) {
+	//						break;
+	//					} else {
+	//						sleep(1);
+	//					}
+	//				} else {
+	//					usleep(1000);
+	//				}
+	//			}
+	//			gettimeofday(&now, NULL);
+	//
+	//			proxy.isSocketError();
+	//			client.isSocketError();
+	//			//} while (FD_ISSET(client.socket_fd,&rfds_src)|| FD_ISSET(proxy.socket_fd,&rfds_src));
+	//		} while ((!proxy.sendError || !client.sendError) && timeout.tv_sec
+	//				> now.tv_sec);
+	//		//printf("pfd=%d,%d cfd=%d,%d\n", proxy.sendError , proxy.recvError,client.sendError,client.recvError);
+	//		//fflush(stdout);
+	//		//sleep(10);
+	//
+	//		client.close_socket();
+	//		proxy.close_socket();
+	//
+	//	}
 
 	void reject() {
 		req.VN = 0;
@@ -578,9 +761,6 @@ public:
 		int len = 8;
 		client.sendData(data, len);
 	}
-	SocksData req;
-	mySocket client;
-	mySocket proxy;
 
 };
 mySocket listen_socket;
@@ -607,8 +787,8 @@ void handlerChld(int signo) {
 	if (signo == SIGCHLD) {
 		int status;
 		int chld_pid = waitpid(-1, &status, WUNTRACED | WCONTINUED);
-		//printf("child over pid=%d\n", chld_pid);
-		//fflush(stdout);
+		printf("child over pid=%d\n", chld_pid);
+		fflush(stdout);
 	}
 }
 
@@ -619,19 +799,19 @@ void get_linsten_port() {
 	if (atoi(input) != 0)
 		PORTNUM = atoi(input);
 }
-static void loadRules(){
-	memset(rules,0,sizeof(rules));
-	FILE *fp=fopen("socks.conf","r");
+static void loadRules() {
+	memset(rules, 0, sizeof(rules));
+	FILE *fp = fopen("socks.conf", "r");
 	char buf[255];
-	memset(buf,0,sizeof(buf));
-	int len=0;
-	int i=0;
-	while(len=fgets(buf, sizeof(buf), fp) != NULL){
-		rules[i]=myIpRange();
+	memset(buf, 0, sizeof(buf));
+	int len = 0;
+	int i = 0;
+	while (len = fgets(buf, sizeof(buf), fp) != NULL) {
+		rules[i] = myIpRange();
 		rules[i].parseRange(buf);
 		//printf("%s",buf);
 		i++;
-		memset(buf,0,sizeof(buf));
+		memset(buf, 0, sizeof(buf));
 	}
 	fclose(fp);
 }
@@ -645,10 +825,6 @@ int main() {
 	listen_socket = mySocket();
 	get_linsten_port();
 	listen_socket.local_port = PORTNUM;
-	if (-1) {
-		printf("-1");
-		fflush(stdout);
-	}
 
 	if (listen_socket.listen_socket()) {
 		printf("socket listen error\n");
