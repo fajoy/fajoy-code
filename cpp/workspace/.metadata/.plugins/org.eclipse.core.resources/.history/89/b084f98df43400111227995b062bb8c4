@@ -1,0 +1,28 @@
+#include <stdlib.h>
+#include <iostream>
+#include <stdio.h>
+#include <string.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <resolv.h>
+using namespace std;
+
+int main() {
+	struct hostent *server = (struct hostent *) gethostbyname("ubu.fajoy.co.cc");
+	struct in_addr addr;
+	int ip=0;
+	if(server){
+		while(*server->h_aliases)
+			printf("alias:%s\n",*server->h_aliases++);
+
+		while(*server->h_addr_list){
+			memcpy(*server->h_addr_list++,&addr,sizeof(addr));
+
+			printf("addr :%d\n",inet_ntoa(addr));
+		}
+	}
+
+	return 0;
+}
