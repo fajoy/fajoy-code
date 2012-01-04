@@ -20,6 +20,7 @@
 #include <map>
 #define debug_fd 1000
 int PORTNUM = 8000;
+int bindport=8003;
 /*
  #ifdef debug_fd
  dprintf(debug_fd,);
@@ -432,7 +433,7 @@ public:
 	}
 	void proxy_bind(bool isReject) {
 		//proxy.local_port = (req.port[0] << 8) + req.port[1];
-		proxy.local_port = 8003;
+		proxy.local_port = bindport;
 		req.port[0]=proxy.local_port/256;
 		req.port[1]=proxy.local_port%256;
 		req.ip[0]=140;
@@ -833,6 +834,9 @@ int main() {
 	}
 	while (1) {
 		handlerAccept();
+		bindport++;
+		if(bindport>8005)
+			bindport=8003;
 	}
 	listen_socket.close_listen();
 
