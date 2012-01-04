@@ -1,0 +1,28 @@
+   1 .:
+   2 總計 40
+   3 drwxr-xr-x 3 fajoy fajoy 4096 2011-12-21 17:09 .
+   4 drwxr-xr-x 3 fajoy fajoy 4096 2011-12-19 22:44 ..
+   5 drwxr-xr-x 2 fajoy fajoy 4096 2011-12-19 22:44 bin
+   6 -rw-r--r-- 1 fajoy fajoy  115 2011-12-19 22:44 lala.txt
+   7 -rw-r--r-- 1 fajoy fajoy   66 2011-12-19 22:44 ls.txt
+   8 -rw-r----- 1 fajoy fajoy   94 2011-12-21 23:12 temp2.html
+   9 -rw-r----- 1 fajoy fajoy 1189 2011-12-22 01:10 temp.html
+  10 -rw-r--r-- 1 fajoy fajoy  115 2011-12-19 22:44 test1.txt
+  11 -rw-r--r-- 1 fajoy fajoy  140 2011-12-19 22:44 test2.txt
+  12 -rw-r--r-- 1 fajoy fajoy   90 2011-12-19 22:44 test.html
+  13 
+  14 bin:
+  15 總計 184
+  16 drwxr-xr-x 2 fajoy fajoy  4096 2011-12-19 22:44 .
+  17 drwxr-xr-x 3 fajoy fajoy  4096 2011-12-21 17:09 ..
+  18 -rwxr-xr-x 1 fajoy fajoy 38524 2011-12-19 22:44 cat
+  19 -rwxr-xr-x 1 fajoy fajoy 96324 2011-12-19 22:44 ls
+  20 -rwxr-xr-x 1 fajoy fajoy  7241 2011-12-19 22:44 noop
+  21 -rwxr-xr-x 1 fajoy fajoy 12930 2011-12-19 22:44 number
+  22 -rwxr-xr-x 1 fajoy fajoy  7609 2011-12-19 22:44 removetag
+  23 -rwxr-xr-x 1 fajoy fajoy  7773 2011-12-19 22:44 removetag0
+  24 
+  25 Test
+  26 This is a test program
+  27 for ras.
+  28 
