@@ -1,0 +1,10 @@
+
+#include <iostream>
+using namespace std;
+
+int main() {
+	struct hostent *server = (struct hostent *) gethostbyname("ubu.fajoy.co.cc");
+    //server->h_addr;
+	cout << "!!!Hello World!!!" << endl; // prints !!!Hello World!!!
+	return 0;
+}

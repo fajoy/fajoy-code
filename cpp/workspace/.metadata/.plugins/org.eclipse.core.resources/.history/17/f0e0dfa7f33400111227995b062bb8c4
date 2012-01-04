@@ -1,0 +1,17 @@
+#include <stdlib.h>
+#include <iostream>
+#include <stdio.h>
+#include <string.h>
+#include <netdb.h>
+#include <netinet/in.h>
+using namespace std;
+
+int main() {
+	struct hostent *server = (struct hostent *) gethostbyname("ubu.fajoy.co.cc");
+	int ip=0;
+
+	memcpy(&ip,server->h_addr[0],sizeof(ip));
+	cout<<inet_ntoa(ip)<<endl;
+
+	return 0;
+}
