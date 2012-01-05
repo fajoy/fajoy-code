@@ -770,7 +770,7 @@ void handlerAccept() {
 	listen_socket.accept_socket();
 	int pid = 0;
 	pid = fork();
-	if (pid == 0) {
+	if (pid != 0) {
 		//printf("accept pid=%d", pid);
 		//fflush(stdout);
 		listen_socket.close_socket();
