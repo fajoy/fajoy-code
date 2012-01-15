@@ -8,27 +8,23 @@
 
 #include <stdio.h>
 #include <time.h>
-#include <unistd.h>
 #include <iostream>
 using namespace std;
 
-
 int main() {
 
- 	 time_t t;
+
  	 //timeval tv;
- 	 clock_t c;
-	 t = time(NULL);
+
+
 	 while(1){
-		 if(t!=time(NULL)){
-			 t=time(NULL);
-			 //gettimeofday(&tv,NULL);
-			 c=clock();
-			 //tv.tv_usec+=0;
-			 //cout <<"t="<<t<<" tv_usec="<<tv.tv_sec<<" tv_usec="<<tv.tv_usec<<" c="<<c<<endl;
-			 cout << "c="<<c<<endl;
-			 usleep(100000);
-		 }
+		//gettimeofday(&tv,NULL);
+		printf("c=%d %d\n",clock(),CLOCKS_PER_SEC);
+		//cout <<" tv_usec="<<tv.tv_sec<<" tv_usec="<<tv.tv_usec<<" c="<<c<<endl;
+		fflush(stdout);
+		clock_t c;
+
+		sleep(1);
 	 }
 
 	return 0;

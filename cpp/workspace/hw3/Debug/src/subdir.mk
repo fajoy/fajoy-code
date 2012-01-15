@@ -3,17 +3,17 @@
 ################################################################################
 
 # Add inputs and outputs from these tool invocations to the build variables 
-O_SRCS += \
-../src/hw3.o 
-
 CPP_SRCS += \
-../src/hw3.cpp 
+../src/hw3.cpp \
+../src/hw3_bak.cpp 
 
 OBJS += \
-./src/hw3.o 
+./src/hw3.o \
+./src/hw3_bak.o 
 
 CPP_DEPS += \
-./src/hw3.d 
+./src/hw3.d \
+./src/hw3_bak.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
