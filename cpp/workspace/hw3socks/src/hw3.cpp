@@ -59,10 +59,10 @@ void init_req() {
 	}
 	memset(&req, 0, sizeof(req));
 	sscanf(query, "h1=%[^&]&p1=%[^&]&f1=%[^&]&sh1=%[^&]&sp1=%[^&]&"
-		"h2=%[^&]&p2=%[^&]&f2=%[^&]&sh1=%[^&]&sp1=%[^&]&"
-		"h3=%[^&]&p3=%[^&]&f3=%[^&]&sh1=%[^&]&sp1=%[^&]&"
-		"h4=%[^&]&p4=%[^&]&f4=%[^&]&sh1=%[^&]&sp1=%[^&]&"
-		"h5=%[^&]&p5=%[^&]&f5=%[^&]&sh1=%[^&]&sp1=%[^&]", &req.h1[0],
+		"h2=%[^&]&p2=%[^&]&f2=%[^&]&sh2=%[^&]&sp2=%[^&]&"
+		"h3=%[^&]&p3=%[^&]&f3=%[^&]&sh3=%[^&]&sp3=%[^&]&"
+		"h4=%[^&]&p4=%[^&]&f4=%[^&]&sh4=%[^&]&sp4=%[^&]&"
+		"h5=%[^&]&p5=%[^&]&f5=%[^&]&sh5=%[^&]&sp5=%[^&]", &req.h1[0],
 			&req.p1[0], &req.f1[0], &req.sh1[0], &req.sp1[0], &req.h2[0],
 			&req.p2[0], &req.f2[0], &req.sh2[0], &req.sp2[0], &req.h3[0],
 			&req.p3[0], &req.f3[0], &req.sh3[0], &req.sp3[0], &req.h4[0],
@@ -365,7 +365,7 @@ public:
 	string recv_buf;
 	string send_buf;
 	int mode;
-	timeval send_t;
+
 	timeval time_out;
 	SocksData sd;
 	mySocket s;
@@ -569,9 +569,10 @@ public:
 
 		return 0;
 	}
+	timeval send_t;
 	void setSendtime(){
 		gettimeofday(&send_t, NULL);
-		send_t.tv_sec += 1;
+		send_t.tv_sec += 0;
 	}
 	bool isCanSend(){
 		timeval now;

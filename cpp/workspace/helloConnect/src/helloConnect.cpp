@@ -304,9 +304,13 @@ void clientAction(){
 		fflush(stdout);
 		fds.select_fd(1023);
 
-		if(client.getMode()==-2&&(fds.isRSet(client.socket_fd)||fds.isWSet(client.socket_fd))){
-			if(client.isConnectError())
-				break;
+		if(client.getMode()<0&&(fds.isRSet(client.socket_fd)||fds.isWSet(client.socket_fd))){
+			if(client.isConnectError()){
+
+
+			}
+			cout <<"client connect error ."<<fds.isRSet(client.socket_fd)<<fds.isWSet(client.socket_fd)<<endl;
+			break;
 			fds.clrR(client.socket_fd);
 
 		}else
@@ -408,7 +412,7 @@ int main() {
 */
 	server=mySocket();
 	server.local_port=7000;
-	server.listen_socket();
+	//server.listen_socket();
 
 	cout << server.local_port <<endl;
 	fflush(stdout);

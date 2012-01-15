@@ -15,6 +15,7 @@ public:
 	unsigned int maxIp;
 	char c1[4], c2[4], c3[4], c4[4];
 	unsigned char i1, i2, i3, i4;
+	bool deny;
 	myIpRange() {
 		minIp = 0x00000000;
 		maxIp = 0x00000000;
@@ -25,7 +26,14 @@ public:
 		memset(&c2[0],0,sizeof(c2));
 		memset(&c3[0],0,sizeof(c3));
 		memset(&c4[0],0,sizeof(c4));
-		sscanf(ip_str, "%3[0-9\*].%3[0-9\*].%3[0-9\*].%3[0-9\*]", c1, c2, c3, c4);
+		char c=0;
+
+		sscanf(ip_str, "%[+-]%[0-9\*].%3[0-9\*].%3[0-9\*].%3[0-9\*]",&c, c1, c2, c3, c4);
+		if (c=='-'){
+			deny=true;
+		}else{
+			deny=false;
+		}
 		minIp = 0x00000000;
 		maxIp = 0x00000000;
 		i1 =getMin(c1);
@@ -48,6 +56,12 @@ public:
 	bool isConatins(int ip){
 		return minIp<=ip&&maxIp>=ip;
 	}
+	bool isDeny(int ip){
+		if(deny)
+			return minIp<=ip&&maxIp>=ip;
+		else
+			return false;
+	}
 private:
 	unsigned char getMin(char *c) {
 		char cc=c[0];
@@ -68,7 +82,7 @@ private:
 
 };
 int main() {
-	char ip[] = "192.168.137.*";
+	char ip[] = "+192.168.137.*";
 	//unsigned int ip_i = inet_addr(ip);
 	myIpRange tmp = myIpRange();
 	tmp.parseRange(ip);
@@ -89,8 +103,10 @@ int main() {
 	}
 	fclose(fp);
 
-	for(i=0;i<100;i++){
+	for(i=0;i<5;i++){
 		printf("minIp=%u maxIp=%u isContains=%d\n",rules[i].minIp,rules[i].maxIp,rules[i].isConatins(tmp.minIp));
+		printf("d=%d isDelay=%d\n",rules[i].deny,rules[i].isDeny(tmp.minIp));
+
 	}
 
 	//socks.conf
