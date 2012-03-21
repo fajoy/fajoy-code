@@ -419,7 +419,7 @@ public:
 	timeval send_t;
 	void setSendtime(){
 		gettimeofday(&send_t, NULL);
-		send_t.tv_sec += 0;
+		send_t.tv_sec +=1;
 	}
 	bool isCanSend(){
 		timeval now;
