@@ -850,38 +850,39 @@ void select_con() {
 
 				}
 
-			} else if (fds.isRSet(s->socket_fd) ) {
-				s->recvData(false);
-				if (s->hasRecvData) {
-							c->js((char *)&s->recv_buffer[0]);
-							s->clear_recv_data();
-							if(s->send_len==0){
-							c->readfile();
-							s->setSendData((unsigned char *)c->send_buf.c_str(),c->send_buf.length());
-							c->bjs(&c->send_buf[0]);
-							}
-							fds.setW(s->socket_fd);
-							//fds.clrR(s->socket_fd);
-							s->setMode(1);
-							c->setSendtime();
-				} else {
-					con--;
-					fds.clrR(s->socket_fd);
-					s->setMode(-1);
-				}
-			}
-			//cout <<"con:"<<con<<" i:"<<i<<" s:"<<s->getMode()
-					//<<"s"<<s->send_len<<"r"<<s->recv_len<<endl;
-		}
+                        } else if (fds.isRSet(s->socket_fd) ) {
+                           s->recvData(false);
+                           if (s->hasRecvData) {
+                              c->js((char *)&s->recv_buffer[0]);
+                              s->clear_recv_data();
+                              if(s->send_len==0){
+                                 c->readfile();
+                                 s->setSendData((unsigned char *)c->send_buf.c_str(),c->send_buf.length());
+                                 c->bjs(&c->send_buf[0]);
+                              }
 
-	}
-	for (i = 0; i < 5; i++) {
-		if (sc[i].is_con && sc[i].is_openfile) {
-			sc[i].s.close_socket();
-			//FD_SET(sc[i].con_fd,&rfds_src);
-			//FD_SET(sc[i].con_fd,&wfds_src);
-		}
-	}
+                              fds.setW(s->socket_fd);
+                              //fds.clrR(s->socket_fd);
+                              s->setMode(1);
+                              c->setSendtime();
+                           } else {
+                              con--;
+                              fds.clrR(s->socket_fd);
+                              s->setMode(-1);
+                           }
+                        }
+                        //cout <<"con:"<<con<<" i:"<<i<<" s:"<<s->getMode()
+                        //<<"s"<<s->send_len<<"r"<<s->recv_len<<endl;
+                }
+
+        }
+        for (i = 0; i < 5; i++) {
+           if (sc[i].is_con && sc[i].is_openfile) {
+              sc[i].s.close_socket();
+              //FD_SET(sc[i].con_fd,&rfds_src);
+              //FD_SET(sc[i].con_fd,&wfds_src);
+           }
+        }
 
 }
 
